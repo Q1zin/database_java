@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Database {
     private String name;
-    private final Map<String, Table> tables = new HashMap<>(); // Храним таблицы по имени
+    private final Map<String, Table> tables = new HashMap<>();
 
     public Database() {}
 
@@ -20,8 +20,8 @@ public class Database {
         this.name = name;
     }
 
-    public Map<String, Table> getTables() {
-        return tables;
+    public Table getTable(String name) {
+        return tables.get(name);
     }
 
     public boolean containsTable(String tableName) {
@@ -32,5 +32,13 @@ public class Database {
         tables.remove(nameTable);
     }
 
+    public Map<String, Table> getTables() {
+        return tables;
+    }
+
+    public void setTables(Map<String, Table> tables) {
+        this.tables.clear();
+        this.tables.putAll(tables);
+    }
 }
 
