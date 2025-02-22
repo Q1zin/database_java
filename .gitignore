@@ -2,6 +2,9 @@
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.idea
+
+db
 
 ### Eclipse ###
 .apt_generated
@@ -32,4 +35,9 @@ bin/
 
 # Ignore Gradle build output directory
 build
+
+./db
+
+db
+
 
