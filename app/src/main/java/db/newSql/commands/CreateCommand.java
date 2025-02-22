@@ -80,8 +80,6 @@ public class CreateCommand extends AbstractCommand {
     }
 
     private void do_request(Database db) {
-        System.out.println(tableName);
-        System.out.println(columnsList);
         Table newTable = new Table(tableName);
         for (Column column : columnsList) {
             newTable.addColumn(column);
