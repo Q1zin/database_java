@@ -45,7 +45,6 @@ public class InsertCommand extends AbstractCommand {
         if (!stringData.trim().startsWith("(") || !stringData.trim().endsWith(")")) {
             stringData = "(" + stringData + ")";
         }
-        System.out.println("Data do obrabotky: " + stringData);
     }
 
     public void parse_data() {
@@ -92,7 +91,7 @@ public class InsertCommand extends AbstractCommand {
                         case "int" -> Integer.parseInt(dataCollection.get(i).toString());
                         case "string", "date", "[]strings" -> dataCollection.get(i).toString();
                         case "boolean" -> Boolean.parseBoolean(dataCollection.get(i).toString());
-                        default -> throw new IllegalArgumentException("Неизвестная ошибка(( 228");
+                        default -> throw new IllegalArgumentException("Неизвестный тип данных в базе данных");
                     };
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("Неверный формат данных! Ошибка преобразований");
