@@ -53,6 +53,14 @@ public class Table {
         return data;
     }
 
+    public boolean hasColumn(String columnName) {
+        if (columnName == null || columnName.trim().isEmpty()) {
+            return false;
+        }
+
+        return columns.stream().anyMatch(column -> columnName.equals(column.getName()));
+    }
+
     @JsonIgnore
     public int getMinArgs() {
         int minColumns = -1;
