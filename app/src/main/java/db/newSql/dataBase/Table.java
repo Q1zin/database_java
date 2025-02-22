@@ -1,5 +1,7 @@
 package db.newSql.dataBase;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,10 @@ public class Table {
         this.data = data;
     }
 
+    public void addData(List<Map<String, Object>> data) {
+        this.data.addAll(data);
+    }
+
     public void addColumn(Column column) {
         columns.add(column);
     }
@@ -45,5 +51,17 @@ public class Table {
 
     public List<Map<String, Object>> getData() {
         return data;
+    }
+
+    @JsonIgnore
+    public int getMinArgs() {
+        int minColumns = -1;
+        for (int i = 0; i < columns.size(); i++) {
+            if (columns.get(i).getFlags().contains("not-null")) {
+                minColumns = i;
+            }
+        }
+
+        return minColumns == -1 ? 0 : minColumns + 1;
     }
 }
