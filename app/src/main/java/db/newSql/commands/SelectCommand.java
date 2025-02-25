@@ -1,5 +1,6 @@
 package db.newSql.commands;
 
+import db.newSql.PDO;
 import db.newSql.dataBase.Database;
 import db.newSql.dataBase.Table;
 
@@ -86,6 +87,8 @@ public class SelectCommand extends AbstractCommand {
     private void do_request(Database db) {
         if (allFields) {
             System.out.println(listSelected);
+            System.out.println("PDO.RESILT_SQL = " + listSelected.toString());
+            PDO.RESILT_SQL = listSelected.toString();
             return;
         }
 
@@ -102,6 +105,7 @@ public class SelectCommand extends AbstractCommand {
                 result.add(newRow);
             }
         }
-        System.out.println(result);
+        System.out.println("PDO.RESILT_SQL = " + result.toString());
+        PDO.RESILT_SQL = result.toString();
     }
 }

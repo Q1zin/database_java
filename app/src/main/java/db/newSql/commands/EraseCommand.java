@@ -1,11 +1,10 @@
 package db.newSql.commands;
 
 import db.newSql.dataBase.Database;
+import static db.newSql.PDO.PATH_DB;
 
 import java.io.File;
 import java.util.regex.*;
-
-import static db.newSql.App.PATH_DB;
 
 @CommandName("ERASE")
 public class EraseCommand extends AbstractCommand {
