@@ -1,9 +1,11 @@
 package org.openjfx;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.net.URL;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -12,6 +14,11 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
+import javafx.animation.PauseTransition;
+import javafx.util.Duration;
 
 import mySql.PDO;
 
@@ -36,6 +43,9 @@ public class FXMLController {
     private Button btnClearSql;
 
     @FXML
+    private Button btnCreateNewTable;
+
+    @FXML
     private Button btnDoSql;
 
     @FXML
@@ -51,22 +61,19 @@ public class FXMLController {
     private Button btnWriteDeleteCommand;
 
     @FXML
+    private Button btnWriteDropCommand;
+
+    @FXML
     private Button btnWriteInsertCommand;
 
     @FXML
     private Button btnWriteSelectCommand;
 
     @FXML
-    private Button btnWriteDropCommand;
-
-    @FXML
     private Button createDBBtn;
 
     @FXML
     private Button exportDBBtn;
-
-    @FXML
-    private Button btnCreateNewTable;
 
     @FXML
     private TextField fieldAddField;
@@ -82,6 +89,9 @@ public class FXMLController {
 
     @FXML
     private Label lableNameDb;
+
+    @FXML
+    private VBox messageBlock;
 
     @FXML
     private Tab tabOperation;
@@ -277,5 +287,65 @@ public class FXMLController {
         if (tabsTable.getTabs().size() == 0) {
             tabsTable.getTabs().add(new Tab("?"));
         }
+    }
+
+    private void showError(String message) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("error.fxml"));
+            AnchorPane newBlock = loader.load();
+
+            Text newText = (Text) newBlock.lookup("#errorBlockText");
+            newText.setText(message);
+
+            messageBlock.getChildren().add(newBlock);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(5));
+            delay.setOnFinished(event -> {
+                messageBlock.getChildren().remove(newBlock);
+            });
+            delay.play();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }    
+    }
+
+    private void showWarning(String message) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("warning.fxml"));
+            AnchorPane newBlock = loader.load();
+
+            Text newText = (Text) newBlock.lookup("#warningBlockText");
+            newText.setText(message);
+
+            messageBlock.getChildren().add(newBlock);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(5));
+            delay.setOnFinished(event -> {
+                messageBlock.getChildren().remove(newBlock);
+            });
+            delay.play();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }    
+    }
+
+    private void showNotify(String message) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("notify.fxml"));
+            AnchorPane newBlock = loader.load();
+
+            Text newText = (Text) newBlock.lookup("#notifyBlockText");
+            newText.setText(message);
+
+            messageBlock.getChildren().add(newBlock);
+
+            PauseTransition delay = new PauseTransition(Duration.seconds(3));
+            delay.setOnFinished(event -> {
+                messageBlock.getChildren().remove(newBlock);
+            });
+            delay.play();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }    
     }
 }
