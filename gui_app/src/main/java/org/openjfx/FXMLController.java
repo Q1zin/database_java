@@ -130,7 +130,7 @@ public class FXMLController {
         createDBBtn.setOnMouseClicked(event -> {
             String nameNewDB = fieldNewDB.getText();
             if (nameNewDB.isEmpty()) {
-                System.out.println("Введите имя базы данных!");
+                showWarning("Введите имя базы данных!");
                 return;
             }
 
@@ -141,10 +141,12 @@ public class FXMLController {
                 fieldNewDB.setText("");
 
                 ListDB.getSelectionModel().selectFirst();
+
+                openDbInterface();
             } catch (IllegalArgumentException e) {
-                System.out.println("База данных с таким именем уже существует! Поняли чуть позже =)");
+                showError(e.getMessage());
             } catch (Exception e) {
-                System.out.println("Не удалось записать файл(((((");
+                showError("Не удалось выполнить запрос. " + e.getMessage());
             }     
         });
 
@@ -193,6 +195,9 @@ public class FXMLController {
 
         btnRemoveDb.setOnMouseClicked(event -> {
             pdo.executeSQL("ERASE DATABASE " + getSelectDb(), getSelectDb());
+
+            ListDB.getItems().remove(ListDB.getSelectionModel().getSelectedItem());
+            openDbInterface();
         });
     }
 

@@ -2,6 +2,9 @@ package mySql.commands;
 
 import mySql.dataBase.Database;
 
+import static mySql.PDO.PATH_DB;
+
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +23,7 @@ public class InitCommand extends AbstractCommand {
     @Override
     public void execute(Database db) {
         validate_sql();
+        validate_data(db);
         do_request(db);
     }
 
@@ -32,6 +36,13 @@ public class InitCommand extends AbstractCommand {
         }
 
         databaseName = tableMatcher.group(1);
+    }
+
+    private void validate_data(Database db) {
+        File file = new File(PATH_DB + databaseName + ".json");
+        if (file.exists()) {
+            throw new IllegalArgumentException("База данных с таким именем уже существует!");
+        }
     }
 
     private void do_request(Database db) {

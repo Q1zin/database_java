@@ -13,21 +13,21 @@ import java.util.Map;
 import java.util.Set;
 
 public class PDO {
-    private Map<String, Database> listDB = new HashMap<>();
-    private static boolean isErase = false;
     public static String PATH_DB = "";
     public static String RESILT_SQL = "";
 
     public PDO() {}
 
     public void executeSQL(String sql, String dbName) {
-        Database db = loadDB(dbName);
-        isErase = sql.split(" ")[0].equals("ERASE");
+        boolean isErase = sql.split(" ")[0].equals("ERASE");
+        boolean isInit = sql.split(" ")[0].equals("INIT");
+
+        Database db = (isErase || isInit) ? loadDB(null) : loadDB(dbName);
+        
         RESILT_SQL = "";
         Command commandObj = CommandFactory.createCommand(sql);
         if (commandObj == null) {
-            System.out.println("Неизвестная команда: " + sql);
-            return;
+            throw new IllegalArgumentException("Неизвестная команда: " + sql);
         }
 
         commandObj.execute(db);
@@ -35,8 +35,8 @@ public class PDO {
         if (!isErase)
             writeDB(db);
 
-        updateListDB(db);
 
+        System.out.println("sql: " + sql);
         System.out.println("__________________________________________");
         System.out.println(sql + " выполнено успешно.");
         System.out.println("Результат: " + RESILT_SQL);
@@ -45,7 +45,6 @@ public class PDO {
 
     private Database loadDB(String dbName) {
         if (dbName == null) return new Database();
-        if (listDB.containsKey(dbName)) return listDB.get(dbName);
 
         Database db = null;
 
@@ -69,15 +68,6 @@ public class PDO {
             e.printStackTrace();
         }
         printJSONme(db);
-    }
-
-    private void updateListDB(Database db) {
-        if (isErase) {
-            listDB.remove(db.getName());
-            return;
-        }
-
-        listDB.put(db.getName(), db);
     }
 
     public String getResiltSql() {
