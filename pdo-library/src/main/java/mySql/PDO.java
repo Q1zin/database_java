@@ -10,11 +10,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PDO {
     private Map<String, Database> listDB = new HashMap<>();
     private static boolean isErase = false;
-    public static String PATH_DB = "/Users/mir/Documents/database_java/db/";
+    public static String PATH_DB = "";
     public static String RESILT_SQL = "";
 
     public PDO() {}
@@ -31,7 +32,8 @@ public class PDO {
 
         commandObj.execute(db);
 
-        writeDB(db);
+        if (!isErase)
+            writeDB(db);
 
         updateListDB(db);
 
@@ -41,7 +43,7 @@ public class PDO {
         System.out.println("__________________________________________");
     }
 
-    Database loadDB(String dbName) {
+    private Database loadDB(String dbName) {
         if (dbName == null) return new Database();
         if (listDB.containsKey(dbName)) return listDB.get(dbName);
 
@@ -58,8 +60,7 @@ public class PDO {
         }
     }
 
-    void writeDB(Database db) {
-        System.out.println("Куда: " + PATH_DB + db.getName() + ".json");
+    private void writeDB(Database db) {
         try {
             new ObjectMapper().writeValue(new File(PATH_DB + db.getName() + ".json"), db);
         } catch (JsonProcessingException e) {
@@ -79,19 +80,14 @@ public class PDO {
         listDB.put(db.getName(), db);
     }
 
-    void printJSONme(Database db) {
-        try {
-            String prettyJson = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(db);
-            System.out.println(prettyJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
     public String getResiltSql() {
         return RESILT_SQL;
+    }
+
+    public Set<String> getSetTables(String nameDB) {
+        Database db = loadDB(nameDB);
+
+        return db.getSetTables();
     }
 
     public void setPathDb(String pathDb) {
@@ -100,5 +96,26 @@ public class PDO {
             pathDb += "/";
         }
         PATH_DB = pathDb;
+    }
+
+    public void createDB(String nameDB) {
+        File file = new File(PATH_DB + nameDB + ".json");
+
+        if (file.exists() && file.isFile()) {
+            throw new IllegalArgumentException("База данных с именем " + nameDB + " уже существует");
+        }
+
+        writeDB(new Database(nameDB));
+    }
+
+    private void printJSONme(Database db) {
+        try {
+            String prettyJson = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(db);
+            System.out.println(prettyJson);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

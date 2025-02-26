@@ -4,8 +4,8 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group 'com.database'
-version '1.0.0'
+group = 'com.database'
+version = '1.0.0'
 
 repositories {
     mavenCentral()

@@ -86,8 +86,6 @@ public class SelectCommand extends AbstractCommand {
 
     private void do_request(Database db) {
         if (allFields) {
-            System.out.println(listSelected);
-            System.out.println("PDO.RESILT_SQL = " + listSelected.toString());
             PDO.RESILT_SQL = listSelected.toString();
             return;
         }
@@ -105,7 +103,6 @@ public class SelectCommand extends AbstractCommand {
                 result.add(newRow);
             }
         }
-        System.out.println("PDO.RESILT_SQL = " + result.toString());
         PDO.RESILT_SQL = result.toString();
     }
 }

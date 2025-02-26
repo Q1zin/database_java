@@ -13,9 +13,7 @@ public class MainApp extends Application {
     @Override
     public void start(Stage stage) throws Exception {
         Parent root = FXMLLoader.load(getClass().getResource("start_scene.fxml"));
-        
         Scene scene = new Scene(root, 1280, 720);
-        scene.getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
         
         stage.setTitle("VovixBD - База данных нового поколения! =)");
         stage.setScene(scene);
