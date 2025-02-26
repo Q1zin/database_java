@@ -199,6 +199,13 @@ public class FXMLController {
             ListDB.getItems().remove(ListDB.getSelectionModel().getSelectedItem());
             openDbInterface();
         });
+
+        btnRemoveTable.setOnMouseClicked(event -> {
+            pdo.executeSQL("DROP TABLE " + getSelectTable(), getSelectDb());
+
+            tabsTable.getTabs().remove(tabsTable.getSelectionModel().getSelectedItem());
+            openDbInterface();
+        });
     }
 
     private String getSelectDb() {

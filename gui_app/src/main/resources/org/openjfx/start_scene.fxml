@@ -69,12 +69,7 @@
                   </Button>
                </children>
             </AnchorPane>
-            <TabPane fx:id="tabsTable" layoutX="354.0" layoutY="1.0" prefHeight="33.0" prefWidth="927.0" tabClosingPolicy="UNAVAILABLE">
-              <tabs>
-                <Tab text="Table_1" />
-                <Tab text="Table_2" />
-              </tabs>
-            </TabPane>
+            <TabPane fx:id="tabsTable" layoutX="354.0" layoutY="1.0" prefHeight="33.0" prefWidth="927.0" tabClosingPolicy="UNAVAILABLE" />
             <TabPane fx:id="tabsActions" layoutX="301.0" layoutY="32.0" prefHeight="569.0" prefWidth="979.0" tabClosingPolicy="UNAVAILABLE">
               <tabs>
                 <Tab fx:id="tabView" text="Обзор">
