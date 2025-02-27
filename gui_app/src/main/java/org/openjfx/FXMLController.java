@@ -1,6 +1,7 @@
 package org.openjfx;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 import java.net.URL;
@@ -20,6 +21,7 @@ import javafx.scene.text.Text;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 import javafx.stage.FileChooser;
+import javafx.stage.Window;
 
 import mySql.PDO;
 
@@ -162,6 +164,7 @@ public class FXMLController {
             if (selectedFile != null) {
                 try {
                     pdo.importDB(selectedFile.getAbsolutePath());
+                    showNotify("База данных успешно импортирована");
                 } catch (IllegalArgumentException e) {
                     showError("Не удалось импортировать. " + e.getMessage());
                 } catch (Exception e) {
@@ -173,6 +176,43 @@ public class FXMLController {
             ListDB.getSelectionModel().select(ListDB.getItems().size() - 1);
             
             openDbInterface();
+        });
+
+        exportDBBtn.setOnMouseClicked(event -> {
+            if (ListDB.getSelectionModel().isEmpty()) {
+                showNotify("Выберите базу данных =)");
+                return;
+            }
+
+            String jsonDb = pdo.exportDb(getSelectDb());
+
+            if (jsonDb == null || jsonDb.isEmpty()) {
+                showError("Ошибка экспорта");
+                return;
+            }
+
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Сохранить базу данных");
+            fileChooser.setInitialFileName(getSelectDb() + ".json");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Database file", "*.json")
+            );
+
+            String userHome = System.getProperty("user.home");
+            fileChooser.setInitialDirectory(new File(userHome + "/Downloads"));
+
+            Window window = exportDBBtn.getScene().getWindow();
+            File file = fileChooser.showSaveDialog(window);
+
+            if (file != null) {
+                try (FileWriter writer = new FileWriter(file)) {
+                    writer.write(jsonDb);
+                    showNotify("Файл успешно сохранен: " + file.getAbsolutePath());
+                } catch (IOException e) {
+                    showError("Ошибка при сохранении файла: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
         });
 
         ListDB.setOnMouseClicked(event -> {
@@ -350,7 +390,7 @@ public class FXMLController {
 
             messageBlock.getChildren().add(newBlock);
 
-            PauseTransition delay = new PauseTransition(Duration.seconds(5));
+            PauseTransition delay = new PauseTransition(Duration.seconds(7));
             delay.setOnFinished(event -> {
                 messageBlock.getChildren().remove(newBlock);
             });

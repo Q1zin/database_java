@@ -7,6 +7,7 @@ import mySql.dataBase.Database;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,6 +92,20 @@ public class PDO {
         }
 
         writeDB(db);
+    }
+
+    public String exportDb(String nameDB) {
+        String jsonDb = "";
+        try {
+            StringWriter writer = new StringWriter();
+            new ObjectMapper().writeValue(writer, loadDB(nameDB));
+            jsonDb = writer.toString();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return jsonDb;
     }
 
     public String getResiltSql() {
