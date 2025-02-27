@@ -19,6 +19,7 @@ import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.animation.PauseTransition;
 import javafx.util.Duration;
+import javafx.stage.FileChooser;
 
 import mySql.PDO;
 
@@ -125,7 +126,7 @@ public class FXMLController {
         tabsTable.setVisible(false);
         tabsActions.setVisible(false);
 
-        ListDB.getItems().addAll(getListDataBase());
+        ListDB.getItems().addAll(pdo.getListDataBase());
 
         createDBBtn.setOnMouseClicked(event -> {
             String nameNewDB = fieldNewDB.getText();
@@ -148,6 +149,30 @@ public class FXMLController {
             } catch (Exception e) {
                 showError("Не удалось выполнить запрос. " + e.getMessage());
             }     
+        });
+
+        importDBBtn.setOnMouseClicked(event -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Выберите файл базы данных");
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Database file", "*.json")
+            );
+
+            File selectedFile = fileChooser.showOpenDialog(importDBBtn.getScene().getWindow());
+            if (selectedFile != null) {
+                try {
+                    pdo.importDB(selectedFile.getAbsolutePath());
+                } catch (IllegalArgumentException e) {
+                    showError("Не удалось импортировать. " + e.getMessage());
+                } catch (Exception e) {
+                    showError("Не удалось импортировать. " + e.getMessage());
+                }    
+            }
+
+            updateListDB();
+            ListDB.getSelectionModel().select(ListDB.getItems().size() - 1);
+            
+            openDbInterface();
         });
 
         ListDB.setOnMouseClicked(event -> {
@@ -216,20 +241,6 @@ public class FXMLController {
         return tabsTable.getSelectionModel().getSelectedItem().getText();
     }
 
-    private List<String> getListDataBase() {
-    File folderDB = new File(PATH_DB);
-        File[] listFileDB = folderDB.listFiles();
-        List<String> listDB = new ArrayList<>();
-
-        for (File file : listFileDB) {
-            if (file.isFile() && file.getName().endsWith(".json")) {
-                String fileNameWithoutExtension = file.getName().substring(0, file.getName().length() - 5);
-                listDB.add(fileNameWithoutExtension);
-            }
-        }
-        return listDB;
-    }
-
     private void openDbInterface() {
         btnCreateNewTable.setVisible(true);
         tabsTable.setVisible(true);
@@ -237,6 +248,28 @@ public class FXMLController {
 
         updateTabsTable();
         updateTabsActions();
+    }
+
+    private void updateListDB() {
+        List<String> dbs = pdo.getListDataBase();
+        Set<String> existingDbNames = new HashSet<>(ListDB.getItems());
+        List<String> newDb = new ArrayList<>();
+
+        for (String dbName : dbs) {
+            if (!existingDbNames.contains(dbName)) {
+                newDb.add(dbName);
+            }
+        }
+    
+        ListDB.getItems().addAll(newDb);
+    
+        ListDB.getItems().removeIf(db -> !dbs.contains(db));
+    
+        if (ListDB.getItems().isEmpty()) {
+            btnCreateNewTable.setVisible(false);
+            tabsTable.setVisible(false);
+            tabsActions.setVisible(false);
+        }
     }
 
     private void updateTabsActions() {
@@ -274,6 +307,12 @@ public class FXMLController {
             btnRemoveTable.setVisible(true);
         } else {
             btnRemoveTable.setVisible(false);
+        }
+
+        if (ListDB.getSelectionModel().isEmpty()) {
+            btnRemoveDb.setVisible(false);
+        } else {
+            btnRemoveDb.setVisible(true);
         }
     }
 

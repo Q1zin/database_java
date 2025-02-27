@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.xml.crypto.Data;
+
 public class PDO {
     public static String PATH_DB = "";
     public static String RESILT_SQL = "";
@@ -55,7 +57,7 @@ public class PDO {
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Ошибка загрузки базы данных: " + e.getMessage());
         } catch (Exception e) {
-            throw new IllegalArgumentException("Ошибка загрузки базы данных: " + e.getMessage());
+            throw new IllegalArgumentException("Ошибка загрузки базы данных 2: " + e.getMessage());
         }
     }
 
@@ -70,8 +72,43 @@ public class PDO {
         printJSONme(db);
     }
 
+    public void importDB(String pathToDB) {
+        Database db;
+
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            db = mapper.readValue(new File(pathToDB), Database.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Ошибка загрузки базы данных: " + e.getMessage());
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Ошибка загрузки базы данных 2: " + e.getMessage());
+        }
+
+        List<String> listDb = getListDataBase();
+
+        if (listDb.contains(db.getName())) {
+            throw new IllegalArgumentException("Такая база данных уже существует!");
+        }
+
+        writeDB(db);
+    }
+
     public String getResiltSql() {
         return RESILT_SQL;
+    }
+
+    public List<String> getListDataBase() {
+        File folderDB = new File(PATH_DB);
+        File[] listFileDB = folderDB.listFiles();
+        List<String> listDB = new ArrayList<>();
+
+        for (File file : listFileDB) {
+            if (file.isFile() && file.getName().endsWith(".json")) {
+                String fileNameWithoutExtension = file.getName().substring(0, file.getName().length() - 5);
+                listDB.add(fileNameWithoutExtension);
+            }
+        }
+        return listDB;
     }
 
     public Set<String> getSetTables(String nameDB) {
