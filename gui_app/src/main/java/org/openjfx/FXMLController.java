@@ -4,6 +4,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
+
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.FXCollections;
+import javafx.scene.control.TableColumn;
 import java.net.URL;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,6 +27,10 @@ import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+
+import mySql.dataBase.Column;
+import mySql.dataBase.Database;
+import mySql.dataBase.Table;
 
 import mySql.PDO;
 
@@ -119,6 +128,12 @@ public class FXMLController {
 
     @FXML
     private TextArea textareaSql;
+
+    @FXML
+    private Label viewCommad;
+
+    @FXML
+    private TableView<Map<String, Object>> tableView;
 
     @FXML
     void initialize() {
@@ -326,7 +341,23 @@ public class FXMLController {
     }
 
     private void loadTabView() {
-        
+        viewCommad.setText("SELECT * FROM " + getSelectTable());
+        clearTableData();
+        tableView.setPlaceholder(new Label("Таблица пуста"));
+        if (getSelectTable().equals("?")) {
+            return;
+        }
+
+        pdo.executeSQL("SELECT * FROM " + getSelectTable(), getSelectDb());
+        // pdo.executeSQL("INSERT INTO " + getSelectTable() + " ((1, ggwp, 22.02.12), (2, test, 25.05.30))", getSelectDb());
+        System.out.println("Выводим в таблицу: " + pdo.getResiltSql());
+
+        Table table = pdo.getTable(getSelectDb(), getSelectTable());
+
+        // table.addColumn(new Column("Имя", "String", List.of()));
+        // table.insertData(Map.of("Имя", "Петр", "Возраст", 35, "Зарплата", 70000));
+
+        initializeTableData(table);
     }
 
     private void loadTabStruct() {
@@ -438,5 +469,32 @@ public class FXMLController {
         } catch (IOException e) {
             e.printStackTrace();
         }    
+    }
+
+    private void clearTableData() {
+        tableView.getColumns().clear();
+        tableView.getItems().clear();
+    }
+
+    public void initializeTableData(Table table) {
+        clearTableData();
+
+        if (getSelectTable().equals("?")) return;
+
+        System.out.println("Идёт запись...");
+
+        for (Column column : table.getColumns()) {
+            TableColumn<Map<String, Object>, Object> tableColumn = new TableColumn<>(column.getName());
+
+            tableColumn.setCellValueFactory(data -> {
+                Map<String, Object> row = data.getValue();
+                return new SimpleObjectProperty<>(row.get(column.getName()));
+            });
+
+            tableView.getColumns().add(tableColumn);
+        }
+
+        ObservableList<Map<String, Object>> data = FXCollections.observableArrayList(table.getData());
+        tableView.setItems(data);
     }
 }

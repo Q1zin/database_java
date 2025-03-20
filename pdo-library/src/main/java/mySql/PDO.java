@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mySql.commands.Command;
 import mySql.dataBase.Database;
+import mySql.dataBase.Table;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -44,6 +45,10 @@ public class PDO {
         System.out.println(sql + " выполнено успешно.");
         System.out.println("Результат: " + RESILT_SQL);
         System.out.println("__________________________________________");
+    }
+
+    public Table getTable(String dbName, String tableName) {
+        return loadDB(dbName).getTable(tableName);
     }
 
     private Database loadDB(String dbName) {
