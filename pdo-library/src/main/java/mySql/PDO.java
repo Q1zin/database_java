@@ -20,6 +20,10 @@ public class PDO {
     public static String PATH_DB = "";
     public static String RESILT_SQL = "";
 
+    public PDO(String pathDb) {
+        setPathDb(pathDb);
+    }
+
     public PDO() {}
 
     public void executeSQL(String sql, String dbName) {
@@ -121,6 +125,8 @@ public class PDO {
         File folderDB = new File(PATH_DB);
         File[] listFileDB = folderDB.listFiles();
         List<String> listDB = new ArrayList<>();
+
+        if (listFileDB == null) return listDB;
 
         for (File file : listFileDB) {
             if (file.isFile() && file.getName().endsWith(".json")) {

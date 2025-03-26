@@ -10,6 +10,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TableColumn;
 import java.net.URL;
+import java.util.concurrent.ExecutionException;
+
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
@@ -27,17 +29,30 @@ import javafx.animation.PauseTransition;
 import javafx.util.Duration;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
+import javafx.scene.control.cell.MapValueFactory;
+
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import mySql.dataBase.Column;
 import mySql.dataBase.Database;
 import mySql.dataBase.Table;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import org.openjfx.services.FileHandler;
+import org.openjfx.services.NotificationManager;
+
 import mySql.PDO;
 
 public class FXMLController {
-    public PDO pdo = new PDO();
-
-    public final String PATH_DB = "/Users/mir/Documents/database_java/db";
+    private PDO pdo;
+    private NotificationManager notificationManager;
+    private final FileHandler fileHandler = new FileHandler();
+    private static final Logger logger = LogManager.getLogger(FXMLController.class);
+    private boolean isProgrammaticChange = false;
 
     @FXML
     private ResourceBundle resources;
@@ -46,263 +61,270 @@ public class FXMLController {
     private URL location;
 
     @FXML
-    private ListView<String> ListDB;
+    private Button btnAddField, btnClearSql, btnDoSql, btnCreateNewTable, btnRemoveDb,
+            btnRemoveTable, btnSaveStruct, btnWriteDeleteCommand, btnWriteDropCommand,
+            btnWriteInsertCommand, btnWriteSelectCommand, createDBBtn, exportDBBtn, importDBBtn;
 
     @FXML
-    private Button btnAddField;
+    private TextField fieldAddField, fieldNameTable, fieldNewDB;
 
     @FXML
-    private Button btnClearSql;
-
-    @FXML
-    private Button btnCreateNewTable;
-
-    @FXML
-    private Button btnDoSql;
-
-    @FXML
-    private Button btnRemoveDb;
-
-    @FXML
-    private Button btnRemoveTable;
-
-    @FXML
-    private Button btnSaveStruct;
-
-    @FXML
-    private Button btnWriteDeleteCommand;
-
-    @FXML
-    private Button btnWriteDropCommand;
-
-    @FXML
-    private Button btnWriteInsertCommand;
-
-    @FXML
-    private Button btnWriteSelectCommand;
-
-    @FXML
-    private Button createDBBtn;
-
-    @FXML
-    private Button exportDBBtn;
-
-    @FXML
-    private TextField fieldAddField;
-
-    @FXML
-    private TextField fieldNameTable;
-
-    @FXML
-    private TextField fieldNewDB;
-
-    @FXML
-    private Button importDBBtn;
-
-    @FXML
-    private Label lableNameDb;
+    private Label lableNameDb, viewCommad;
 
     @FXML
     private VBox messageBlock;
 
     @FXML
-    private Tab tabOperation;
-
-    @FXML
-    private Tab tabSql;
-
-    @FXML
-    private Tab tabStruct;
-
-    @FXML
-    private Tab tabView;
+    private Tab tabSql, tabStruct, tabView, tabOperation;
 
     @FXML
     private TableView<?> tableStruct;
 
     @FXML
-    private TabPane tabsActions;
-
-    @FXML
-    private TabPane tabsTable;
-
-    @FXML
-    private TextArea textareaSql;
-
-    @FXML
-    private Label viewCommad;
+    private ListView<String> ListDB;
 
     @FXML
     private TableView<Map<String, Object>> tableView;
 
     @FXML
+    private TabPane tabsActions, tabsTable;
+
+    @FXML
+    private TextArea textareaSql;
+
+    @FXML
     void initialize() {
-        pdo.setPathDb(PATH_DB);
+        String PATH_DB = "/Users/mir/Documents/database_java/db";
+        pdo = new PDO(PATH_DB);
+        notificationManager = new NotificationManager(messageBlock);
 
-        btnCreateNewTable.setVisible(false);
-        tabsTable.setVisible(false);
-        tabsActions.setVisible(false);
+        closeDbInterface();
+        updateListDB();
 
-        ListDB.getItems().addAll(pdo.getListDataBase());
-
-        createDBBtn.setOnMouseClicked(event -> {
-            String nameNewDB = fieldNewDB.getText();
-            if (nameNewDB.isEmpty()) {
-                showWarning("Введите имя базы данных!");
+        tabsActions.getSelectionModel().selectedItemProperty().addListener((observable, oldTab, newTab) -> {
+            if (newTab == null || newTab != tabView) { return; }
+            if (isProgrammaticChange) {
+                isProgrammaticChange = false;
                 return;
             }
 
-            try {
-                pdo.executeSQL("INIT DATABASE " + nameNewDB, nameNewDB);
-
-                ListDB.getItems().addFirst(nameNewDB);
-                fieldNewDB.setText("");
-
-                ListDB.getSelectionModel().selectFirst();
-
-                openDbInterface();
-            } catch (IllegalArgumentException e) {
-                showError(e.getMessage());
-            } catch (Exception e) {
-                showError("Не удалось выполнить запрос. " + e.getMessage());
-            }     
+            loadTabView();
         });
 
-        importDBBtn.setOnMouseClicked(event -> {
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Выберите файл базы данных");
-            fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Database file", "*.json")
-            );
-
-            File selectedFile = fileChooser.showOpenDialog(importDBBtn.getScene().getWindow());
-            if (selectedFile != null) {
-                try {
-                    pdo.importDB(selectedFile.getAbsolutePath());
-                    showNotify("База данных успешно импортирована");
-                } catch (IllegalArgumentException e) {
-                    showError("Не удалось импортировать. " + e.getMessage());
-                } catch (Exception e) {
-                    showError("Не удалось импортировать. " + e.getMessage());
-                }    
-            }
-
-            updateListDB();
-            ListDB.getSelectionModel().select(ListDB.getItems().size() - 1);
-            
-            openDbInterface();
-        });
-
-        exportDBBtn.setOnMouseClicked(event -> {
-            if (ListDB.getSelectionModel().isEmpty()) {
-                showNotify("Выберите базу данных =)");
-                return;
-            }
-
-            String jsonDb = pdo.exportDb(getSelectDb());
-
-            if (jsonDb == null || jsonDb.isEmpty()) {
-                showError("Ошибка экспорта");
-                return;
-            }
-
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Сохранить базу данных");
-            fileChooser.setInitialFileName(getSelectDb() + ".json");
-            fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Database file", "*.json")
-            );
-
-            String userHome = System.getProperty("user.home");
-            fileChooser.setInitialDirectory(new File(userHome + "/Downloads"));
-
-            Window window = exportDBBtn.getScene().getWindow();
-            File file = fileChooser.showSaveDialog(window);
-
-            if (file != null) {
-                try (FileWriter writer = new FileWriter(file)) {
-                    writer.write(jsonDb);
-                    showNotify("Файл успешно сохранен: " + file.getAbsolutePath());
-                } catch (IOException e) {
-                    showError("Ошибка при сохранении файла: " + e.getMessage());
-                    e.printStackTrace();
-                }
-            }
-        });
-
-        ListDB.setOnMouseClicked(event -> {
-            if (ListDB.getSelectionModel().isEmpty()) {
-                return;
-            }
-
-            openDbInterface();
-        });
-
-        tabsTable.setOnMouseClicked(event -> {
-            updateTabsTable();
-            updateTabsActions();
-        });
-    
-        btnCreateNewTable.setOnMouseClicked(event -> {
-            if (!tabsTable.getTabs().isEmpty() && tabsTable.getTabs().get(tabsTable.getTabs().size() - 1).getText().equals("?")) {
-                return;   
-            }
-
-            tabsTable.getTabs().add(new Tab("?"));
-            tabsTable.getSelectionModel().select(tabsTable.getTabs().size() - 1);
-            updateTabsActions();
-        });
+        ListDB.setOnMouseClicked(event -> openDbInterface());
+        createDBBtn.setOnMouseClicked(event -> createDatabase());
+        importDBBtn.setOnMouseClicked(event -> importDatabase());
+        exportDBBtn.setOnMouseClicked(event -> exportDatabase());
+        tabsTable.setOnMouseClicked(event -> openTableInterface());
+        btnCreateNewTable.setOnMouseClicked(event -> createNewTable());
+        btnDoSql.setOnMouseClicked(event -> doSql());
 
         btnWriteSelectCommand.setOnMouseClicked(event -> {
             textareaSql.setText("SELECT * FROM " + getSelectTable());
         });
-
         btnWriteInsertCommand.setOnMouseClicked(event -> {
             textareaSql.setText("INSERT INTO " + getSelectTable() + " ()");
         });
-        
         btnWriteDropCommand.setOnMouseClicked(event -> {
             textareaSql.setText("DROP TABLE " + getSelectTable());
         });
-
         btnWriteDeleteCommand.setOnMouseClicked(event -> {
             textareaSql.setText("DELETE FROM " + getSelectTable() + " WHERE");
         });
-
         btnClearSql.setOnMouseClicked(event -> {
             textareaSql.setText("");
         });
 
-        btnRemoveDb.setOnMouseClicked(event -> {
-            pdo.executeSQL("ERASE DATABASE " + getSelectDb(), getSelectDb());
+        btnRemoveDb.setOnMouseClicked(event -> removeDb());
+        btnRemoveTable.setOnMouseClicked(event -> removeTable());
+    }
 
-            ListDB.getItems().remove(ListDB.getSelectionModel().getSelectedItem());
-            openDbInterface();
-        });
-
-        btnRemoveTable.setOnMouseClicked(event -> {
+    private void removeTable() {
+        try {
             pdo.executeSQL("DROP TABLE " + getSelectTable(), getSelectDb());
 
             tabsTable.getTabs().remove(tabsTable.getSelectionModel().getSelectedItem());
             openDbInterface();
-        });
+
+            notificationManager.showNotify("Таблица успешно удалена");
+        } catch (IllegalArgumentException e) {
+            logger.error("Не удалось удалить таблицу {}. Произошла внутренняя ошибка: {}. StackTrace: {}", getSelectTable(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось удалить таблицу " + getSelectTable() + ". Произошла внутренняя ошибка: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Не удалось удалить таблицу {}. Произошла внутренняя ошибка (неожиданная ошибка) : {}. StackTrace: {}", getSelectTable(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось удалить таблицу " + getSelectTable() + ". Произошла внутренняя ошибка (неожиданная ошибка): " + e.getMessage());
+        }
     }
 
-    private String getSelectDb() {
-        return ListDB.getSelectionModel().getSelectedItem();
-    }
+    private void removeDb() {
+        try {
+            pdo.executeSQL("ERASE DATABASE " + getSelectDb(), getSelectDb());
 
-    private String getSelectTable() {
-        return tabsTable.getSelectionModel().getSelectedItem().getText();
+            ListDB.getItems().remove(ListDB.getSelectionModel().getSelectedItem());
+            openDbInterface();
+
+            notificationManager.showNotify("База данных успешно удалена");
+        } catch (IllegalArgumentException e) {
+            logger.error("Не удалось удалить базу данных {}. Произошла внутренняя ошибка: {}. StackTrace: {}", getSelectDb(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось удалить базу данных " + getSelectDb() + ". Произошла внутренняя ошибка: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Не удалось удалить базу данных {}. Произошла внутренняя ошибка (неожиданная ошибка) : {}. StackTrace: {}", getSelectDb(), e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось удалить базу данных " + getSelectDb() + ". Произошла внутренняя ошибка (неожиданная ошибка): " + e.getMessage());
+        }
     }
 
     private void openDbInterface() {
+        if (getSelectDb().isEmpty()) {
+            closeDbInterface();
+            return;
+        }
+
         btnCreateNewTable.setVisible(true);
         tabsTable.setVisible(true);
         tabsActions.setVisible(true);
 
+        openTableInterface();
+    }
+
+    private void closeDbInterface() {
+        btnCreateNewTable.setVisible(false);
+        tabsTable.setVisible(false);
+        tabsActions.setVisible(false);
+    }
+
+    private void createDatabase() {
+        String nameNewDB = fieldNewDB.getText();
+
+        if (nameNewDB.isEmpty()) {
+            notificationManager.showWarning("Введите имя базы данных!");
+            return;
+        }
+
+        try {
+            logger.info("Создаём базу данных: INIT DATABASE {}", nameNewDB);
+            pdo.executeSQL("INIT DATABASE " + nameNewDB, nameNewDB);
+
+            ListDB.getItems().addFirst(nameNewDB);
+            fieldNewDB.setText("");
+
+            ListDB.getSelectionModel().selectFirst();
+            openDbInterface();
+
+            notificationManager.showNotify("База данных создана.");
+        } catch (IllegalArgumentException e) {
+            logger.error("Ошибка при содании базы данных: : {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Ошибка при содании базы данных: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Ошибка при содании базы данных (неожиданная ошибка): {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Ошибка при содании базы данных (неожиданная ошибка): " + e.getMessage());
+        }
+    }
+
+    private void importDatabase() {
+        logger.info("Начали импорт базы данных");
+        File file = fileHandler.openFileDialog("Выберите файл базы данных");
+        if (file != null) {
+            try {
+                logger.info("Импорт базы данных в PDO: {}", file.getAbsolutePath());
+                pdo.importDB(file.getAbsolutePath());
+                notificationManager.showNotify("База данных импортирована.");
+
+                updateListDB();
+                ListDB.getSelectionModel().selectLast();
+
+                openDbInterface();
+            } catch (IllegalArgumentException e) {
+                logger.error("Ошибка импорта: : {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+                notificationManager.showError("Ошибка импорта: " + e.getMessage());
+            } catch (Exception e) {
+                logger.error("Ошибка импорта (неожиданная ошибка): {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+                notificationManager.showError("Ошибка импорта (неожиданная ошибка): " + e.getMessage());
+            }
+        } else {
+            logger.info("Пользователь не выбрал файл для импорта");
+        }
+    }
+
+    private void exportDatabase() {
+        logger.info("Начали экспорт базы данных");
+        String dbName = getSelectDb();
+        if (dbName.isEmpty()) {
+            logger.info("Пользователь не выбрал базу данных для экспорта");
+            notificationManager.showWarning("Выберите базу данных.");
+            return;
+        }
+
+        File file = fileHandler.saveFileDialog("Сохранить базу данных", dbName + ".json");
+        if (file != null) {
+            try {
+                fileHandler.saveToFile(file, pdo.exportDb(dbName));
+                notificationManager.showNotify("Файл сохранен.");
+            } catch (IOException e) {
+                logger.error("Ошибка экспорта: {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+                notificationManager.showError("Ошибка экспорта: " + e.getMessage());
+            } catch (Exception e) {
+                logger.error("Ошибка экспорта (неожиданная ошибка): {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+                notificationManager.showError("Ошибка экспорта (неожиданная ошибка): " + e.getMessage());
+            }
+        } else {
+            logger.info("Пользователь не выбрал файл для экспорта");
+        }
+    }
+
+    private void openTableInterface() {
         updateTabsTable();
         updateTabsActions();
+    }
+
+    private void createNewTable() {
+        if (!tabsTable.getTabs().isEmpty() && tabsTable.getTabs().getLast().getText().equals("?")) {
+            return;
+        }
+
+        tabsTable.getTabs().addLast(new Tab("?"));
+        tabsTable.getSelectionModel().selectLast();
+        updateTabsActions();
+    }
+
+    private void doSql() {
+        String sql = textareaSql.getText();
+        String nameDB = getSelectDb();
+
+        if (sql.isEmpty() || nameDB.isEmpty()) { return; }
+
+        logger.info("Начали выполнение sql запроса пользователя: nameDb: {}, sql: {}", nameDB, sql);
+
+        String command = sql.split(" ")[0];
+
+        try {
+            if (command.equals("SELECT")) {
+                logger.info("Переходим в обзор и выводим результат (Команда SELECT)");
+                loadTabView(sql);
+                isProgrammaticChange = true;
+                tabsActions.getSelectionModel().select(0);
+                textareaSql.setText("");
+                notificationManager.showNotify("Запрос успешно выполнен.");
+                return;
+            }
+            pdo.executeSQL(sql, nameDB);
+
+            textareaSql.setText("");
+            notificationManager.showNotify("Запрос успешно выполнен.");
+            logger.info("Запрос успешно выполнен ({}). Результат {}", sql, pdo.getResiltSql());
+
+            switch (command) {
+                case "DROP" -> openDbInterface();
+                case "ERASE" -> {
+                    updateListDB();
+                    openDbInterface();
+                }
+                case "CREATE" -> updateTabsTable();
+                case "INIT" -> updateListDB();
+            }
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить запрос {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось выполнить запрос. " + e.getMessage());
+        }
     }
 
     private void updateListDB() {
@@ -315,75 +337,13 @@ public class FXMLController {
                 newDb.add(dbName);
             }
         }
-    
+
         ListDB.getItems().addAll(newDb);
-    
+
         ListDB.getItems().removeIf(db -> !dbs.contains(db));
-    
+
         if (ListDB.getItems().isEmpty()) {
-            btnCreateNewTable.setVisible(false);
-            tabsTable.setVisible(false);
-            tabsActions.setVisible(false);
-        }
-    }
-
-    private void updateTabsActions() {
-        if (tabsTable.getTabs().get(tabsTable.getTabs().size() - 1).getText().equals("?")) {
-            tabsActions.getSelectionModel().select(1);
-        } else {
-            tabsActions.getSelectionModel().select(0);
-        }
-
-        loadTabView();
-        loadTabStruct();
-        loadTabSql();
-        loadTabOperation();
-    }
-
-    private void loadTabView() {
-        viewCommad.setText("SELECT * FROM " + getSelectTable());
-        clearTableData();
-        tableView.setPlaceholder(new Label("Таблица пуста"));
-        if (getSelectTable().equals("?")) {
-            return;
-        }
-
-        pdo.executeSQL("SELECT * FROM " + getSelectTable(), getSelectDb());
-        // pdo.executeSQL("INSERT INTO " + getSelectTable() + " ((1, ggwp, 22.02.12), (2, test, 25.05.30))", getSelectDb());
-        System.out.println("Выводим в таблицу: " + pdo.getResiltSql());
-
-        Table table = pdo.getTable(getSelectDb(), getSelectTable());
-
-        // table.addColumn(new Column("Имя", "String", List.of()));
-        // table.insertData(Map.of("Имя", "Петр", "Возраст", 35, "Зарплата", 70000));
-
-        initializeTableData(table);
-    }
-
-    private void loadTabStruct() {
-        if (!tabsTable.getTabs().get(tabsTable.getTabs().size() - 1).getText().equals("?")) {
-            fieldNameTable.setText(getSelectTable());
-        } else {
-            fieldNameTable.setText("");
-        }
-    }
-
-    private void loadTabSql() {
-        lableNameDb.setText(getSelectDb());
-        textareaSql.setText("");
-    }
-
-    private void loadTabOperation() {
-        if (!tabsTable.getTabs().get(tabsTable.getTabs().size() - 1).getText().equals("?")) {
-            btnRemoveTable.setVisible(true);
-        } else {
-            btnRemoveTable.setVisible(false);
-        }
-
-        if (ListDB.getSelectionModel().isEmpty()) {
-            btnRemoveDb.setVisible(false);
-        } else {
-            btnRemoveDb.setVisible(true);
+            closeDbInterface();
         }
     }
 
@@ -406,69 +366,67 @@ public class FXMLController {
 
         tabsTable.getTabs().removeIf(tab -> !tables.contains(tab.getText()));
 
-        if (tabsTable.getTabs().size() == 0) {
+        if (tabsTable.getTabs().isEmpty()) {
             tabsTable.getTabs().add(new Tab("?"));
         }
     }
 
-    private void showError(String message) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("error.fxml"));
-            AnchorPane newBlock = loader.load();
+    private void updateTabsActions() {
+        if (tabsTable.getTabs().getLast().getText().equals("?")) {
+            tabsActions.getSelectionModel().select(1);
+        } else {
+            tabsActions.getSelectionModel().select(0);
+        }
 
-            Text newText = (Text) newBlock.lookup("#errorBlockText");
-            newText.setText(message);
-
-            messageBlock.getChildren().add(newBlock);
-
-            PauseTransition delay = new PauseTransition(Duration.seconds(7));
-            delay.setOnFinished(event -> {
-                messageBlock.getChildren().remove(newBlock);
-            });
-            delay.play();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }    
+        loadTabView();
+        loadTabStruct();
+        loadTabSql();
+        loadTabOperation();
     }
 
-    private void showWarning(String message) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("warning.fxml"));
-            AnchorPane newBlock = loader.load();
-
-            Text newText = (Text) newBlock.lookup("#warningBlockText");
-            newText.setText(message);
-
-            messageBlock.getChildren().add(newBlock);
-
-            PauseTransition delay = new PauseTransition(Duration.seconds(5));
-            delay.setOnFinished(event -> {
-                messageBlock.getChildren().remove(newBlock);
-            });
-            delay.play();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }    
+    private void loadTabView() {
+        loadTabView("SELECT * FROM " + getSelectTable());
     }
 
-    private void showNotify(String message) {
+    private void loadTabView(String sql) {
+        viewCommad.setText(sql);
+        clearTableData();
+        tableView.setPlaceholder(new Label("Таблица пуста"));
+        if (getSelectTable().equals("?")) {
+            return;
+        }
+
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("notify.fxml"));
-            AnchorPane newBlock = loader.load();
+            pdo.executeSQL(sql, getSelectDb());
+            showTable(pdo.getResiltSql());
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить запрос для отображения данных {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось отобразить данные, передайте логи администратору. Ошибка: " + e.getMessage());
+        }
+    }
 
-            Text newText = (Text) newBlock.lookup("#notifyBlockText");
-            newText.setText(message);
+    private void loadTabOperation() {
+        btnRemoveTable.setVisible(!tabsTable.getTabs().getLast().getText().equals("?"));
+        btnRemoveDb.setVisible(!getSelectDb().isEmpty());
+    }
 
-            messageBlock.getChildren().add(newBlock);
+    private void loadTabSql() {
+        lableNameDb.setText(getSelectDb());
+        textareaSql.setText("");
+    }
 
-            PauseTransition delay = new PauseTransition(Duration.seconds(3));
-            delay.setOnFinished(event -> {
-                messageBlock.getChildren().remove(newBlock);
-            });
-            delay.play();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }    
+    private void loadTabStruct() {
+        fieldNameTable.setText(tabsTable.getTabs().getLast().getText().equals("?") ? "" : getSelectTable());
+    }
+
+    private String getSelectDb() {
+        String dbName = ListDB.getSelectionModel().getSelectedItem();
+        return (dbName != null) ? dbName : "";
+    }
+
+    private String getSelectTable() {
+        var tableName = tabsTable.getSelectionModel().getSelectedItem();
+        return (tableName != null) ? tableName.getText() : "";
     }
 
     private void clearTableData() {
@@ -476,25 +434,34 @@ public class FXMLController {
         tableView.getItems().clear();
     }
 
-    public void initializeTableData(Table table) {
-        clearTableData();
+    private void showTable(String sqlResult) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            List<Map<String, Object>> items = mapper.readValue(
+                    sqlResult,
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
 
-        if (getSelectTable().equals("?")) return;
+            ObservableList<Map<String, Object>> itemsList = FXCollections.observableArrayList();
+            itemsList.addAll(items);
 
-        System.out.println("Идёт запись...");
+            tableView.getColumns().clear();
 
-        for (Column column : table.getColumns()) {
-            TableColumn<Map<String, Object>, Object> tableColumn = new TableColumn<>(column.getName());
+            if (!items.isEmpty()) {
+                Map<String, Object> firstRow = items.getFirst();
 
-            tableColumn.setCellValueFactory(data -> {
-                Map<String, Object> row = data.getValue();
-                return new SimpleObjectProperty<>(row.get(column.getName()));
-            });
+                for (String key : firstRow.keySet()) {
+                    TableColumn<Map<String, Object>, Object> column = new TableColumn<>(key);
+                    column.setCellValueFactory(cellData ->
+                            new SimpleObjectProperty<>(cellData.getValue().get(key)));
+                    tableView.getColumns().add(column);
+                }
+            }
 
-            tableView.getColumns().add(tableColumn);
+            tableView.setItems(itemsList);
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить преобразования для отображения данных {}: {}. StackTrace: {}", sqlResult, e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось выполнить преобразования для отображения данных. Ошибка: " + e.getMessage());
         }
-
-        ObservableList<Map<String, Object>> data = FXCollections.observableArrayList(table.getData());
-        tableView.setItems(data);
     }
 }

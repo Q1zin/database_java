@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 
 @CommandName("SELECT")
 public class SelectCommand extends AbstractCommand {
@@ -86,7 +88,12 @@ public class SelectCommand extends AbstractCommand {
 
     private void do_request(Database db) {
         if (allFields) {
-            PDO.RESILT_SQL = listSelected.toString();
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                PDO.RESILT_SQL = objectMapper.writeValueAsString(listSelected);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             return;
         }
 
@@ -103,6 +110,12 @@ public class SelectCommand extends AbstractCommand {
                 result.add(newRow);
             }
         }
-        PDO.RESILT_SQL = result.toString();
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            PDO.RESILT_SQL = objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

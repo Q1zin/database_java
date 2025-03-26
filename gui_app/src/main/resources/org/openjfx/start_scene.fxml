@@ -11,6 +11,7 @@
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToolBar?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -121,7 +122,7 @@
                                     <TableColumn prefWidth="297.88409423828125" text="Действие" />
                                 </columns>
                               </TableView>
-                              <Button fx:id="btnSaveStruct" layoutX="18.0" layoutY="468.0" mnemonicParsing="false" text="Сохранить!">
+                              <Button fx:id="btnSaveStruct" layoutX="18.0" layoutY="459.0" mnemonicParsing="false" text="Сохранить!">
                                  <font>
                                     <Font name="Helvetica" size="14.0" />
                                  </font>
@@ -139,8 +140,23 @@
                                     <Font name="Helvetica" size="14.0" />
                                  </font>
                               </TextArea>
-                              <HBox layoutX="20.0" layoutY="315.0" prefHeight="34.0" prefWidth="408.0">
-                                 <children>
+                              <Button fx:id="btnDoSql" layoutX="893.0" layoutY="316.0" mnemonicParsing="false" text="Вперёд!">
+                                 <font>
+                                    <Font name="Helvetica" size="14.0" />
+                                 </font>
+                              </Button>
+                              <Label layoutX="17.0" layoutY="13.0" text="Выполнение запроса к БД:">
+                                 <font>
+                                    <Font name="Helvetica" size="16.0" />
+                                 </font>
+                              </Label>
+                              <Label fx:id="lableNameDb" layoutX="229.0" layoutY="14.0" text="NameDB">
+                                 <font>
+                                    <Font name="Helvetica" size="16.0" />
+                                 </font>
+                              </Label>
+                              <ToolBar layoutX="14.0" layoutY="308.0" prefHeight="40.0" prefWidth="508.0" style="-fx-background-color: none;">
+                                <items>
                                     <Button fx:id="btnWriteSelectCommand" mnemonicParsing="false" text="SELECT">
                                        <font>
                                           <Font name="Helvetica" size="14.0" />
@@ -166,23 +182,8 @@
                                           <Font name="Helvetica" size="14.0" />
                                        </font>
                                     </Button>
-                                 </children>
-                              </HBox>
-                              <Button fx:id="btnDoSql" layoutX="893.0" layoutY="316.0" mnemonicParsing="false" text="Вперёд!">
-                                 <font>
-                                    <Font name="Helvetica" size="14.0" />
-                                 </font>
-                              </Button>
-                              <Label layoutX="17.0" layoutY="13.0" text="Выполнение запроса к БД:">
-                                 <font>
-                                    <Font name="Helvetica" size="16.0" />
-                                 </font>
-                              </Label>
-                              <Label fx:id="lableNameDb" layoutX="229.0" layoutY="14.0" text="NameDB">
-                                 <font>
-                                    <Font name="Helvetica" size="16.0" />
-                                 </font>
-                              </Label>
+                                </items>
+                              </ToolBar>
                            </children>
                         </AnchorPane>
                      </content>
@@ -191,8 +192,12 @@
                      <content>
                         <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                            <children>
-                              <Button fx:id="btnRemoveTable" layoutX="22.0" layoutY="16.0" mnemonicParsing="false" text="Удалить таблицу" />
-                              <Button fx:id="btnRemoveDb" layoutX="21.0" layoutY="54.0" mnemonicParsing="false" text="Удалить БД" />
+                              <ToolBar layoutX="14.0" layoutY="14.0" prefHeight="40.0" prefWidth="278.0" style="-fx-background-color: none;">
+                                 <items>
+                                    <Button fx:id="btnRemoveDb" mnemonicParsing="false" text="Удалить базу данных" />
+                                    <Button fx:id="btnRemoveTable" mnemonicParsing="false" text="Удалить таблицу" />
+                                 </items>
+                              </ToolBar>
                            </children>
                         </AnchorPane>
                      </content>
@@ -200,12 +205,12 @@
               </tabs>
             </TabPane>
             <Separator layoutX="285.0" layoutY="1.0" orientation="VERTICAL" prefHeight="720.0" prefWidth="34.0" />
-            <Button fx:id="btnCreateNewTable" layoutX="313.0" layoutY="3.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="10.0" text="+" textAlignment="CENTER">
+            <Button fx:id="btnCreateNewTable" layoutX="313.0" layoutY="4.0" mnemonicParsing="false" prefHeight="20.0" prefWidth="10.0" text="+" textAlignment="CENTER">
                <font>
                   <Font name="Helvetica" size="14.0" />
                </font>
             </Button>
-            <VBox fx:id="messageBlock" layoutX="1022.0" prefHeight="720.0" prefWidth="259.0" />
+            <VBox fx:id="messageBlock" layoutX="1022.0" prefHeight="5.0" prefWidth="259.0" />
          </children>
       </AnchorPane>
    </children>
