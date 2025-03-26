@@ -94,8 +94,7 @@ public class FXMLController {
 
     @FXML
     void initialize() {
-        String PATH_DB = "/Users/mir/Documents/database_java/db";
-        pdo = new PDO(PATH_DB);
+        pdo = new PDO(fileHandler.getDbPath());
         notificationManager = new NotificationManager(messageBlock);
 
         closeDbInterface();

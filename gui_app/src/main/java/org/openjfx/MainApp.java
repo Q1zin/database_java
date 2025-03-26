@@ -7,18 +7,30 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 import mySql.PDO;
+import org.openjfx.services.FileHandler;
+
+import java.io.File;
 
 public class MainApp extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("start_scene.fxml"));
-        Scene scene = new Scene(root, 1280, 720);
-        
+        FileHandler fileHandler = new FileHandler();
+        String dbPath = fileHandler.getDbPath();
+
+        if (dbPath != null) {
+            Parent root = FXMLLoader.load(getClass().getResource("start_scene.fxml"));
+            stage.setScene(new Scene(root, 1280, 720));
+        } else {
+            Parent root = FXMLLoader.load(getClass().getResource("init_scene.fxml"));
+            stage.setScene(new Scene(root));
+        }
+
         stage.setTitle("VovixBD - База данных нового поколения! =)");
-        stage.setScene(scene);
         stage.setResizable(false);
         stage.show();
+
+
     }
 
     public static void main(String[] args) {

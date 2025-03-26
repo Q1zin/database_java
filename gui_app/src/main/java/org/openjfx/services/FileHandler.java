@@ -1,10 +1,11 @@
 package org.openjfx.services;
 
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Window;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+
+import java.io.*;
+import java.util.Properties;
 
 public class FileHandler {
     public File openFileDialog(String title) {
@@ -25,6 +26,69 @@ public class FileHandler {
     public void saveToFile(File file, String content) throws IOException {
         try (FileWriter writer = new FileWriter(file)) {
             writer.write(content);
+        }
+    }
+
+    public File chooseDatabaseDirectory(String title) {
+        DirectoryChooser directoryChooser = new DirectoryChooser();
+        directoryChooser.setTitle(title);
+        return directoryChooser.showDialog(null);
+    }
+
+    public File getAppDataDirectory() {
+        String home = System.getProperty("user.home");
+        String appDataPath;
+
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            appDataPath = home + "\\AppData\\Local\\VovixBD\\";
+        } else if (System.getProperty("os.name").toLowerCase().contains("mac")) {
+            appDataPath = home + "/Library/Application Support/VovixBD/";
+        } else {
+            appDataPath = home + "/.VovixBD/";
+        }
+
+        File appDataDir = new File(appDataPath);
+        if (!appDataDir.exists()) {
+            appDataDir.mkdirs();
+        }
+
+        return appDataDir;
+    }
+
+    public String getDbPath() {
+        File settingsFile = new File(getAppDataDirectory(), "settings.properties");
+
+        if (!settingsFile.exists()) {
+            return null;
+        }
+
+        Properties properties = new Properties();
+        try (FileInputStream fis = new FileInputStream(settingsFile)) {
+            properties.load(fis);
+            return properties.getProperty("db_path");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void saveDbPath(File settingsFile, String dbPath) {
+        Properties properties = new Properties();
+
+        if (settingsFile.exists()) {
+            try (FileInputStream fis = new FileInputStream(settingsFile)) {
+                properties.load(fis);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        properties.setProperty("db_path", dbPath);
+
+        try (FileOutputStream fos = new FileOutputStream(settingsFile)) {
+            properties.store(fos, "Application Settings");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
