@@ -11,6 +11,9 @@ import javafx.scene.control.TableColumn;
 import java.net.URL;
 
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -20,6 +23,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -38,6 +42,7 @@ public class FXMLController {
     private final FileHandler fileHandler = new FileHandler();
     private static final Logger logger = LogManager.getLogger(FXMLController.class);
     private boolean isProgrammaticChange = false;
+    private Stage settingsStage = null;
 
     @FXML
     private ResourceBundle resources;
@@ -48,7 +53,7 @@ public class FXMLController {
     @FXML
     private Button btnAddField, btnClearSql, btnDoSql, btnCreateNewTable, btnRemoveDb,
             btnRemoveTable, btnSaveStruct, btnWriteDeleteCommand, btnWriteDropCommand,
-            btnWriteInsertCommand, btnWriteSelectCommand, createDBBtn, exportDBBtn, importDBBtn;
+            btnWriteInsertCommand, btnWriteSelectCommand, createDBBtn, exportDBBtn, importDBBtn, btnSettings;
 
     @FXML
     private TextField fieldAddField, fieldNameTable, fieldNewDB;
@@ -99,6 +104,7 @@ public class FXMLController {
         createDBBtn.setOnMouseClicked(event -> createDatabase());
         importDBBtn.setOnMouseClicked(event -> importDatabase());
         exportDBBtn.setOnMouseClicked(event -> exportDatabase());
+        btnSettings.setOnMouseClicked(event -> openSettings());
         tabsTable.setOnMouseClicked(event -> openTableInterface());
         btnCreateNewTable.setOnMouseClicked(event -> createNewTable());
         btnDoSql.setOnMouseClicked(event -> doSql());
@@ -254,6 +260,47 @@ public class FXMLController {
             logger.info("Пользователь не выбрал файл для экспорта");
         }
     }
+
+    private void openSettings() {
+        if (settingsStage != null) {
+            settingsStage.toFront();
+            settingsStage.requestFocus();
+            return;
+        }
+
+        try {
+            settingsStage = new Stage();
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("settings_scene.fxml"));
+            Parent settingsRoot = loader.load();
+            settingsStage.setScene(new Scene(settingsRoot));
+
+            settingsStage.setTitle("VovixBD - Настройки");
+            settingsStage.setResizable(false);
+
+            FXMLControllerSettings controller = loader.getController();
+            controller.updateText(PDO.getPathDb());
+
+            settingsStage.setOnHiding(event -> {
+                String selectedPath = controller.getSelectedPath();
+                if (selectedPath != null && !selectedPath.isEmpty() && !selectedPath.equals(PDO.getPathDb())) {
+                    PDO.setPathDb(selectedPath);
+                    File settingsFile = new File(fileHandler.getAppDataDirectory(), "settings.properties");
+                    fileHandler.saveDbPath(settingsFile, PDO.getPathDb());
+                    closeDbInterface();
+                    updateListDB();
+                }
+                settingsStage = null;
+            });
+
+            settingsStage.show();
+            controller.initialize();
+        } catch (IOException e) {
+            logger.error("Ошибка при открытии окна настроек: {}. StackTrace: {}", e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Ошибка: Не удалось загрузить окно настроек.");
+        }
+    }
+
 
     private void openTableInterface() {
         updateTabsTable();

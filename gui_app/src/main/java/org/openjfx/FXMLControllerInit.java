@@ -38,7 +38,6 @@ public class FXMLControllerInit {
         textPathDefault.setText(PATH_SELECT);
 
         btnGo.setOnMouseClicked(event -> {
-
             File settingsFile = new File(fileHandler.getAppDataDirectory(), "settings.properties");
             fileHandler.saveDbPath(settingsFile, PATH_SELECT);
 
