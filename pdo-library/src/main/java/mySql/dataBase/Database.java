@@ -46,10 +46,5 @@ public class Database {
     public Map<String, Table> getTables() {
         return tables;
     }
-
-    public void setTables(Map<String, Table> tables) {
-        this.tables.clear();
-        this.tables.putAll(tables);
-    }
 }
 

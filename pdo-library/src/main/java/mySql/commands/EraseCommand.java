@@ -1,7 +1,7 @@
 package mySql.commands;
 
+import mySql.PDO;
 import mySql.dataBase.Database;
-import static mySql.PDO.PATH_DB;
 
 import java.io.File;
 import java.util.regex.*;
@@ -17,12 +17,12 @@ public class EraseCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern databasePattern = Pattern.compile("^ERASE DATABASE ([a-zA-Z_][a-zA-Z0-9_]*)$");
         Matcher databaseMatcher = databasePattern.matcher(sql);
 
@@ -33,14 +33,14 @@ public class EraseCommand extends AbstractCommand {
         dbName = databaseMatcher.group(1);
     }
 
-    private void validate_data(Database db) {
-        file = new File(PATH_DB + dbName + ".json");
+    private void validateData(Database db) {
+        file = new File(PDO.getPathDb() + dbName + ".json");
         if (!file.exists()) {
             throw new IllegalArgumentException("Базы данных с таким именем нету");
         }
     }
 
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         file.delete();
     }
 }

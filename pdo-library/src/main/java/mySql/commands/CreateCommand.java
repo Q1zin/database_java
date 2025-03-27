@@ -1,20 +1,19 @@
 package mySql.commands;
 
+import mySql.TypeFactory;
 import mySql.dataBase.Column;
 import mySql.dataBase.Database;
 import mySql.dataBase.Table;
 
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.*;
+import java.util.stream.Collectors;
 
 @CommandName("CREATE")
 public class CreateCommand extends AbstractCommand {
     private String tableName;
-    private List<Column> columnsList = new ArrayList<>();
+    private final List<Column> columnsList = new ArrayList<>();
 
     private String columnsString;
 
@@ -24,13 +23,13 @@ public class CreateCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        parse_data();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        parseData();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern tablePattern = Pattern.compile("^CREATE TABLE ([a-zA-Z_][a-zA-Z0-9_]*) \\((.*)\\)$");
         Matcher tableMatcher = tablePattern.matcher(sql);
 
@@ -42,10 +41,15 @@ public class CreateCommand extends AbstractCommand {
         columnsString = tableMatcher.group(2);
     }
 
-    private void parse_data() {
+    private void parseData() {
         if (columnsString.trim().isEmpty()) { return; }
         String[] columnsArray = columnsString.trim().split(";\\s*");
-        Pattern columnPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*) (int|string|date|boolean|\\[\\]strings)(?: (unique|not-null))?(?: (unique|not-null))?");
+
+        String regexValue = TypeFactory.getTypes().stream()
+                .map(type -> type.replace("[", "\\[").replace("]", "\\]"))
+                .collect(Collectors.joining("|"));
+
+        Pattern columnPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*) (" + regexValue + ")(?: (unique|not-null))?(?: (unique|not-null))?");
 
         for (String column : columnsArray) {
             Column newColumn = getColumn(column, columnPattern);
@@ -69,17 +73,16 @@ public class CreateCommand extends AbstractCommand {
             }
         }
 
-        Column newColumn = new Column(columnMatcher.group(1), columnMatcher.group(2), attributes);
-        return newColumn;
+        return new Column(columnMatcher.group(1), columnMatcher.group(2), attributes);
     }
 
-    private void validate_data(Database db) {
+    private void validateData(Database db) {
         if (db.containsTable(tableName)) {
             throw new IllegalArgumentException("Таблица с таким именем уже есть");
         }
     }
 
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         Table newTable = new Table(tableName);
         for (Column column : columnsList) {
             newTable.addColumn(column);

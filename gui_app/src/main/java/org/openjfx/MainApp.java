@@ -6,10 +6,9 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import mySql.PDO;
 import org.openjfx.services.FileHandler;
 
-import java.io.File;
+import java.util.Objects;
 
 public class MainApp extends Application {
 
@@ -19,18 +18,16 @@ public class MainApp extends Application {
         String dbPath = fileHandler.getDbPath();
 
         if (dbPath != null) {
-            Parent root = FXMLLoader.load(getClass().getResource("start_scene.fxml"));
+            Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("start_scene.fxml")));
             stage.setScene(new Scene(root, 1280, 720));
         } else {
-            Parent root = FXMLLoader.load(getClass().getResource("init_scene.fxml"));
+            Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("init_scene.fxml")));
             stage.setScene(new Scene(root));
         }
 
         stage.setTitle("VovixBD - База данных нового поколения! =)");
         stage.setResizable(false);
         stage.show();
-
-
     }
 
     public static void main(String[] args) {

@@ -22,13 +22,13 @@ public class DeleteCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        parse_data();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        parseData();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern tablePattern = Pattern.compile("^DELETE FROM ([a-zA-Z_][a-zA-Z0-9_]*) WHERE (.+)$");
         Matcher tableMatcher = tablePattern.matcher(sql);
 
@@ -40,12 +40,12 @@ public class DeleteCommand extends AbstractCommand {
         conditionString = tableMatcher.group(2);
     }
 
-    private void parse_data() {
+    private void parseData() {
         if (conditionString.isEmpty()) {
             return;
         }
 
-        Pattern conditionPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*(>=|<=|!=|=|>|<)\\s*(\\\"[^\\\"]*\\\"|\\[(?:[^\\[\\]]*?)\\]|[a-zA-Z0-9_\\-]+)"); // мб когда-нибудь реализую OR, !=, <, ...
+        Pattern conditionPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*(=)\\s*(\\\"[^\\\"]*\\\"|\\[(?:[^\\[\\]]*?)\\]|[a-zA-Z0-9_\\-]+)");
         Matcher conditionMatcher = conditionPattern.matcher(conditionString);
 
         while (conditionMatcher.find()) {
@@ -53,7 +53,7 @@ public class DeleteCommand extends AbstractCommand {
         }
     }
 
-    private void validate_data(Database db) {
+    private void validateData(Database db) {
         if (!db.containsTable(tableName)) {
             throw new IllegalArgumentException("Таблицы с таким именем нету");
         }
@@ -62,7 +62,7 @@ public class DeleteCommand extends AbstractCommand {
         listToDeleted = table.getWhereData(conditionList);
     }
 
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         db.getTable(tableName).getData().removeIf(listToDeleted::contains);
     }
 }

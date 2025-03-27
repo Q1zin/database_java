@@ -1,7 +1,6 @@
 package org.openjfx;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -10,10 +9,8 @@ import javafx.collections.ObservableList;
 import javafx.collections.FXCollections;
 import javafx.scene.control.TableColumn;
 import java.net.URL;
-import java.util.concurrent.ExecutionException;
 
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
@@ -22,22 +19,10 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
-import javafx.animation.PauseTransition;
-import javafx.util.Duration;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
-import javafx.scene.control.cell.MapValueFactory;
-
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import mySql.dataBase.Column;
-import mySql.dataBase.Database;
-import mySql.dataBase.Table;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -298,7 +283,10 @@ public class FXMLController {
         try {
             if (command.equals("SELECT")) {
                 logger.info("Переходим в обзор и выводим результат (Команда SELECT)");
-                loadTabView(sql);
+                if (!loadTabView(sql)) {
+                    notificationManager.showError("Не удалось выполнить запрос: Неверный формат команды!");
+                    return;
+                }
                 isProgrammaticChange = true;
                 tabsActions.getSelectionModel().select(0);
                 textareaSql.setText("");
@@ -309,7 +297,7 @@ public class FXMLController {
 
             textareaSql.setText("");
             notificationManager.showNotify("Запрос успешно выполнен.");
-            logger.info("Запрос успешно выполнен ({}). Результат {}", sql, pdo.getResiltSql());
+            logger.info("Запрос успешно выполнен ({}). Результат {}", sql, PDO.getResultSql());
 
             switch (command) {
                 case "DROP" -> openDbInterface();
@@ -320,8 +308,11 @@ public class FXMLController {
                 case "CREATE" -> updateTabsTable();
                 case "INIT" -> updateListDB();
             }
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            notificationManager.showError("Не удалось выполнить запрос: " + e.getMessage());
             logger.error("Не удалось выполнить запрос {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить запрос (неожиданная ошибка) {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
             notificationManager.showError("Не удалось выполнить запрос. " + e.getMessage());
         }
     }
@@ -387,21 +378,31 @@ public class FXMLController {
         loadTabView("SELECT * FROM " + getSelectTable());
     }
 
-    private void loadTabView(String sql) {
-        viewCommad.setText(sql);
-        clearTableData();
-        tableView.setPlaceholder(new Label("Таблица пуста"));
+    private boolean loadTabView(String sql) {
         if (getSelectTable().equals("?")) {
-            return;
+            viewCommad.setText(sql);
+            return false;
         }
 
         try {
             pdo.executeSQL(sql, getSelectDb());
-            showTable(pdo.getResiltSql());
-        } catch (Exception e) {
+
+            viewCommad.setText(sql);
+            clearTableData();
+            tableView.setPlaceholder(new Label("Таблица пуста"));
+
+            showTable(PDO.getResultSql());
+
+            return true;
+        } catch (IllegalArgumentException e) {
             logger.error("Не удалось выполнить запрос для отображения данных {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
+            notificationManager.showError("Не удалось отобразить данные. Ошибка: " + e.getMessage());
+        } catch (Exception e) {
+            logger.error("Не удалось выполнить запрос для отображения данных (неожиданная ошибка) {}: {}. StackTrace: {}", sql, e.getMessage(), Arrays.toString(e.getStackTrace()));
             notificationManager.showError("Не удалось отобразить данные, передайте логи администратору. Ошибка: " + e.getMessage());
         }
+
+        return false;
     }
 
     private void loadTabOperation() {

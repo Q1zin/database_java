@@ -97,7 +97,7 @@ public class Table {
     }
 
     private boolean checkCondition(Map<String, Object> row, String condition) {
-        Pattern pattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)(>=|<=|!=|=|>|<)(.+)");
+        Pattern pattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)(=)(.+)");
         Matcher matcher = pattern.matcher(condition);
 
         if (!matcher.matches()) {

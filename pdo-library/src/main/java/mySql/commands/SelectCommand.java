@@ -30,13 +30,13 @@ public class SelectCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        parse_data();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        parseData();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern tablePattern = Pattern.compile("SELECT (\\*|[a-zA-Z_,]+) FROM ([a-zA-Z_][a-zA-Z0-9_]*)(?: WHERE (.+))?");
         Matcher tableMatcher = tablePattern.matcher(sql);
 
@@ -49,7 +49,7 @@ public class SelectCommand extends AbstractCommand {
         conditionString = tableMatcher.group(3);
     }
 
-    private void parse_data() {
+    private void parseData() {
         if (fieldsString.equals("*")) {
             allFields = true;
         }
@@ -60,7 +60,7 @@ public class SelectCommand extends AbstractCommand {
             return;
         }
 
-        Pattern conditionPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*(>=|<=|!=|=|>|<)\\s*(\\\"[^\\\"]*\\\"|\\[(?:[^\\[\\]]*?)\\]|[a-zA-Z0-9_\\-]+)"); // мб когда-нибудь реализую OR, !=, <, ...
+        Pattern conditionPattern = Pattern.compile("([a-zA-Z_][a-zA-Z0-9_]*)\\s*(=)\\s*(\\\"[^\\\"]*\\\"|\\[(?:[^\\[\\]]*?)\\]|[a-zA-Z0-9_\\-]+)");
         Matcher conditionMatcher = conditionPattern.matcher(conditionString);
 
         while (conditionMatcher.find()) {
@@ -68,7 +68,7 @@ public class SelectCommand extends AbstractCommand {
         }
     }
 
-    private void validate_data(Database db) {
+    private void validateData(Database db) {
         if (!db.containsTable(tableName)) {
             throw new IllegalArgumentException("Таблицы с таким именем нету");
         }
@@ -78,7 +78,7 @@ public class SelectCommand extends AbstractCommand {
         if (!allFields) {
             for (String col : fieldList) {
                 if (!table.hasColumn(col)) {
-                    throw new IllegalArgumentException("Нету такого поля");
+                    throw new IllegalArgumentException("Нету такого поля: " + col);
                 }
             }
         }
@@ -86,13 +86,13 @@ public class SelectCommand extends AbstractCommand {
         listSelected = table.getWhereData(conditionList);
     }
 
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         if (allFields) {
             try {
                 ObjectMapper objectMapper = new ObjectMapper();
-                PDO.RESILT_SQL = objectMapper.writeValueAsString(listSelected);
+                PDO.setResultSql(objectMapper.writeValueAsString(listSelected));
             } catch (Exception e) {
-                e.printStackTrace();
+                throw new RuntimeException("Неожиданная ошибка при сохранении результата");
             }
             return;
         }
@@ -113,9 +113,9 @@ public class SelectCommand extends AbstractCommand {
 
         try {
             ObjectMapper objectMapper = new ObjectMapper();
-            PDO.RESILT_SQL = objectMapper.writeValueAsString(result);
+            PDO.setResultSql(objectMapper.writeValueAsString(result));
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Неожиданная ошибка при сохранении результата");
         }
     }
 }

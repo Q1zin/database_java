@@ -2,7 +2,6 @@ package org.openjfx.services;
 
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
-import javafx.stage.Window;
 
 import java.io.*;
 import java.util.Properties;
@@ -67,8 +66,7 @@ public class FileHandler {
             properties.load(fis);
             return properties.getProperty("db_path");
         } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+            throw new RuntimeException("Не удалось загрузить настройки приложения", e);
         }
     }
 
@@ -79,7 +77,7 @@ public class FileHandler {
             try (FileInputStream fis = new FileInputStream(settingsFile)) {
                 properties.load(fis);
             } catch (IOException e) {
-                e.printStackTrace();
+                throw new RuntimeException("Не удалось загрузить настройки приложения", e);
             }
         }
 
@@ -88,7 +86,7 @@ public class FileHandler {
         try (FileOutputStream fos = new FileOutputStream(settingsFile)) {
             properties.store(fos, "Application Settings");
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Не удалось сохранить настройки приложения", e);
         }
     }
 }

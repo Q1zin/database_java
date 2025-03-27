@@ -2,20 +2,16 @@ package org.openjfx;
 
 import java.io.File;
 import java.net.URL;
+import java.util.Objects;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.text.Text;
 
-import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
-import javafx.event.ActionEvent;
-import javafx.scene.Node;
-
-import java.io.IOException;
 
 import org.openjfx.services.FileHandler;
 
@@ -30,16 +26,10 @@ public class FXMLControllerInit {
     private URL location;
 
     @FXML
-    private Button btnGo;
+    private Button btnGo, btnSelectPath;
 
     @FXML
-    private Button btnSelectPath;
-
-    @FXML
-    private Text textPathDefault;
-
-    @FXML
-    private Text textSelectPath;
+    private Text textPathDefault, textSelectPath;
 
     @FXML
     void initialize() {
@@ -70,7 +60,7 @@ public class FXMLControllerInit {
     }
 
     private void onStartButtonClick() throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("start_scene.fxml"));
+        Parent root = FXMLLoader.load(Objects.requireNonNull(getClass().getResource("start_scene.fxml")));
 
         Stage newStage = new Stage();
         newStage.setScene(new Scene(root, 1280, 720));

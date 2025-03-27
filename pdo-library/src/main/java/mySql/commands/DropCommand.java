@@ -14,12 +14,12 @@ public class DropCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern tablePattern = Pattern.compile("^DROP TABLE ([a-zA-Z_][a-zA-Z0-9_]*)$");
         Matcher tableMatcher = tablePattern.matcher(sql);
 
@@ -30,13 +30,13 @@ public class DropCommand extends AbstractCommand {
         tableName = tableMatcher.group(1);
     }
 
-    private void validate_data(Database db) {
+    private void validateData(Database db) {
         if (!db.containsTable(tableName)) {
             throw new IllegalArgumentException("Таблица с таким именем нету");
         }
     }
 
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         db.rmTable(tableName);
     }
 }

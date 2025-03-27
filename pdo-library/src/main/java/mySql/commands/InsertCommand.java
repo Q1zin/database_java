@@ -1,5 +1,6 @@
 package mySql.commands;
 
+import mySql.TypeFactory;
 import mySql.dataBase.Column;
 import mySql.dataBase.Database;
 import mySql.dataBase.Table;
@@ -25,13 +26,13 @@ public class InsertCommand extends AbstractCommand {
 
     @Override
     public void execute(Database db) {
-        validate_sql();
-        parse_data();
-        validate_data(db);
-        do_request(db);
+        validateSql();
+        parseData();
+        validateData(db);
+        doRequest(db);
     }
 
-    private void validate_sql() {
+    private void validateSql() {
         Pattern inserPattern = Pattern.compile("^INSERT INTO ([a-zA-Z_][a-zA-Z0-9_]*) \\((.*)\\)$");
         Matcher insertMatcher = inserPattern.matcher(sql);
 
@@ -47,7 +48,7 @@ public class InsertCommand extends AbstractCommand {
         }
     }
 
-    public void parse_data() {
+    public void parseData() {
         if (stringData.isEmpty()) {
             return;
         }
@@ -61,7 +62,7 @@ public class InsertCommand extends AbstractCommand {
         }
     }
 
-    private void validate_data(Database db) {
+    private void validateData(Database db) {
         if (!db.containsTable(tableName)) {
             throw new IllegalArgumentException("Таблицы с таким именем нету");
         }
@@ -72,7 +73,7 @@ public class InsertCommand extends AbstractCommand {
 
         for (var dataCollection : dataStringList) {
             if (dataCollection.size() < minArgs) {
-                throw new IllegalArgumentException("Недостаточно аргументов!");
+                throw new IllegalArgumentException("Недостаточно аргументов в блоке: " + dataCollection);
             }
 
             Map<String, Object> data = new HashMap<>();
@@ -80,22 +81,16 @@ public class InsertCommand extends AbstractCommand {
             for (int i = 0; i < dataCollection.size(); i++) {
                 Column col = columns.get(i);
                 String typeString = col.getType();
-
-                if (dataCollection.get(i).toString().isEmpty()) {
-                    throw new IllegalArgumentException("Неверный формат данных!");
+                
+                if (dataCollection.get(i).toString().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Неверный формат данных в: " + dataCollection);
                 }
 
-                Object value;
-                try {
-                    value = switch (typeString) {
-                        case "int" -> Integer.parseInt(dataCollection.get(i).toString());
-                        case "string", "date", "[]strings" -> dataCollection.get(i).toString();
-                        case "boolean" -> Boolean.parseBoolean(dataCollection.get(i).toString());
-                        default -> throw new IllegalArgumentException("Неизвестный тип данных в базе данных");
-                    };
-                } catch (NumberFormatException e) {
-                    throw new IllegalArgumentException("Неверный формат данных! Ошибка преобразований");
-                };
+                if (!TypeFactory.valid(typeString, dataCollection.get(i).toString())) {
+                    throw new IllegalArgumentException("Неверный формат данных! Ошибка преобразований: " + dataCollection.get(i).toString());
+                }
+
+                Object value = TypeFactory.parse(typeString, dataCollection.get(i).toString());
 
                 data.put(col.getName(), value);
             }
@@ -104,7 +99,7 @@ public class InsertCommand extends AbstractCommand {
         }
 
     }
-    private void do_request(Database db) {
+    private void doRequest(Database db) {
         db.getTable(tableName).addData(dataList);
     }
 }

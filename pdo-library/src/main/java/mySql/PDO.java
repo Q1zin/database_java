@@ -9,16 +9,12 @@ import mySql.dataBase.Table;
 import java.io.File;
 import java.util.ArrayList;
 import java.io.StringWriter;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import javax.xml.crypto.Data;
-
 public class PDO {
-    public static String PATH_DB = "";
-    public static String RESILT_SQL = "";
+    private static String PATH_DB = "";
+    private static String RESULT_SQL = "";
 
     public PDO(String pathDb) {
         setPathDb(pathDb);
@@ -32,7 +28,7 @@ public class PDO {
 
         Database db = (isErase || isInit) ? loadDB(null) : loadDB(dbName);
         
-        RESILT_SQL = "";
+        setResultSql("");
         Command commandObj = CommandFactory.createCommand(sql);
         if (commandObj == null) {
             throw new IllegalArgumentException("Неизвестная команда: " + sql);
@@ -40,14 +36,15 @@ public class PDO {
 
         commandObj.execute(db);
 
-        if (!isErase)
+        if (!isErase) {
             writeDB(db);
+        }
 
 
         System.out.println("sql: " + sql);
         System.out.println("__________________________________________");
         System.out.println(sql + " выполнено успешно.");
-        System.out.println("Результат: " + RESILT_SQL);
+        System.out.println("Результат: " + getResultSql());
         System.out.println("__________________________________________");
     }
 
@@ -62,7 +59,7 @@ public class PDO {
 
         ObjectMapper mapper = new ObjectMapper();
         try {
-            db = mapper.readValue(new File(PATH_DB + dbName + ".json"), Database.class);
+            db = mapper.readValue(new File(getPathDb() + dbName + ".json"), Database.class);
             return db;
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Ошибка загрузки базы данных: " + e.getMessage());
@@ -73,13 +70,12 @@ public class PDO {
 
     private void writeDB(Database db) {
         try {
-            new ObjectMapper().writeValue(new File(PATH_DB + db.getName() + ".json"), db);
+            new ObjectMapper().writeValue(new File(getPathDb() + db.getName() + ".json"), db);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка записи базы данных: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Неожиданная ошибка записи базы данных: " + e.getMessage());
         }
-        printJSONme(db);
     }
 
     public void importDB(String pathToDB) {
@@ -89,9 +85,9 @@ public class PDO {
         try {
             db = mapper.readValue(new File(pathToDB), Database.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Ошибка загрузки базы данных: " + e.getMessage());
+            throw new RuntimeException("Ошибка считывания базы данных: " + e.getMessage());
         } catch (Exception e) {
-            throw new IllegalArgumentException("Ошибка загрузки базы данных 2: " + e.getMessage());
+            throw new RuntimeException("Неожиданная ошибка считывания базы данных: " + e.getMessage());
         }
 
         List<String> listDb = getListDataBase();
@@ -110,19 +106,35 @@ public class PDO {
             new ObjectMapper().writeValue(writer, loadDB(nameDB));
             jsonDb = writer.toString();
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Ошибка записи базы данных: " + e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new RuntimeException("Неожиданная ошибка записи базы данных: " + e.getMessage() + " ");
         }
         return jsonDb;
     }
 
-    public String getResiltSql() {
-        return RESILT_SQL;
+    public static String getPathDb() {
+        return PATH_DB;
+    }
+
+    public static void setPathDb(String pathDb) {
+        if (pathDb == null) return;
+        if (pathDb.charAt(pathDb.length() - 1) != '/') {
+            pathDb += "/";
+        }
+        PATH_DB = pathDb;
+    }
+
+    public static String getResultSql() {
+        return RESULT_SQL;
+    }
+
+    public static void setResultSql(String resultSql) {
+        RESULT_SQL = resultSql;
     }
 
     public List<String> getListDataBase() {
-        File folderDB = new File(PATH_DB);
+        File folderDB = new File(getPathDb());
         File[] listFileDB = folderDB.listFiles();
         List<String> listDB = new ArrayList<>();
 
@@ -131,7 +143,10 @@ public class PDO {
         for (File file : listFileDB) {
             if (file.isFile() && file.getName().endsWith(".json")) {
                 String fileNameWithoutExtension = file.getName().substring(0, file.getName().length() - 5);
-                listDB.add(fileNameWithoutExtension);
+                try {
+                    if (!fileNameWithoutExtension.equals(loadDB(fileNameWithoutExtension).getName())) continue;
+                    listDB.add(fileNameWithoutExtension);
+                } catch (Exception ignored) {}
             }
         }
         return listDB;
@@ -143,32 +158,13 @@ public class PDO {
         return db.getSetTables();
     }
 
-    public void setPathDb(String pathDb) {
-        if (pathDb == null) return;
-        if (pathDb.charAt(pathDb.length() - 1) != '/') {
-            pathDb += "/";
-        }
-        PATH_DB = pathDb;
-    }
-
     public void createDB(String nameDB) {
-        File file = new File(PATH_DB + nameDB + ".json");
+        File file = new File(getPathDb() + nameDB + ".json");
 
         if (file.exists() && file.isFile()) {
             throw new IllegalArgumentException("База данных с именем " + nameDB + " уже существует");
         }
 
         writeDB(new Database(nameDB));
-    }
-
-    private void printJSONme(Database db) {
-        try {
-            String prettyJson = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(db);
-            System.out.println(prettyJson);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
