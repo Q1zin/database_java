@@ -87,7 +87,7 @@ public class InsertCommand extends AbstractCommand {
                 }
 
                 if (!TypeFactory.valid(typeString, dataCollection.get(i).toString())) {
-                    throw new IllegalArgumentException("Неверный формат данных! Ошибка преобразований: " + dataCollection.get(i).toString());
+                    throw new IllegalArgumentException("Неверный формат данных! Ошибка преобразований: " + dataCollection.get(i).toString() + " в тип " + typeString);
                 }
 
                 Object value = TypeFactory.parse(typeString, dataCollection.get(i).toString());
