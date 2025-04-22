@@ -184,16 +184,17 @@ public class FXMLController {
                             editButton.setOnAction((ActionEvent event) -> {
                                 TableRowData rowData = getTableView().getItems().get(getIndex());
                                 try {
-                                    if (windowEditStruct == null || loaderEditStruct == null) {
-                                        loaderEditStruct = new FXMLLoader(getClass().getResource("edit_struct_scene.fxml"));
-                                        windowEditStruct = loaderEditStruct.load();
-                                    }
-
-                                    FXMLControllerEditStruct editController = loaderEditStruct.getController();
+                                    FXMLLoader loader = new FXMLLoader(getClass().getResource("edit_struct_scene.fxml"));
+                                    Parent root = loader.load();
+                            
+                                    FXMLControllerEditStruct editController = loader.getController();
                                     editController.setData(rowData);
-
+                                    editController.setOnSaveCallback(() -> {
+                                        getTableView().refresh();
+                                    });
+                            
                                     Stage newStage = new Stage();
-                                    newStage.setScene(new Scene(windowEditStruct));
+                                    newStage.setScene(new Scene(root));
                                     newStage.setResizable(false);
                                     newStage.setTitle("VovixBD - Редактирование структуры базы данных");
                                     newStage.show();

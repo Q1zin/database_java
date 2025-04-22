@@ -35,32 +35,38 @@ public class FXMLControllerEditStruct {
     @FXML
     private ComboBox<String> fieldType;
 
-    public void setData(TableRowData rowData) {
-        fieldName.setText(rowData.getName());
-        fieldType.setValue(rowData.getType());
-        checkboxNotNull.setSelected(rowData.isNotNull());
-        checkboxUnique.setSelected(rowData.isUnique());
+    private TableRowData currentRowData;
+    private Runnable onSaveCallback;
+
+    public void setData(TableRowData data) {
+        this.currentRowData = data;
+        fieldName.setText(data.getName());
+        fieldType.setValue(data.getType());
+        checkboxNotNull.setSelected(data.isNotNull());
+        checkboxUnique.setSelected(data.isUnique());
     }
 
-    @FXML
-    private void onCancel() {
-        Stage stage = (Stage) btnCancel.getScene().getWindow();
-        stage.hide();
-    }
-
-    @FXML
-    private void onSave() {
-        onCancel();
+    public void setOnSaveCallback(Runnable callback) {
+        this.onSaveCallback = callback;
     }
 
     @FXML
     void initialize() {
-        btnSave.setOnMouseClicked(event -> {
-            onSave();
+        fieldType.getItems().addAll("integer", "string", "date", "boolean", "float", "[]strings");
+
+        btnSave.setOnAction(e -> {
+            currentRowData.setName(fieldName.getText());
+            currentRowData.setType(fieldType.getValue());
+            currentRowData.setNotNull(checkboxNotNull.isSelected());
+            currentRowData.setUnique(checkboxUnique.isSelected());
+
+            if (onSaveCallback != null) {
+                onSaveCallback.run();
+            }
+
+            ((Stage) btnSave.getScene().getWindow()).close();
         });
 
-        btnCancel.setOnMouseClicked(event -> {
-            onCancel();
-        });
+        btnCancel.setOnAction(e -> ((Stage) btnCancel.getScene().getWindow()).close());
     }
 }
