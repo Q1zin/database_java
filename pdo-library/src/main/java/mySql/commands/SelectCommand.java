@@ -118,4 +118,8 @@ public class SelectCommand extends AbstractCommand {
             throw new RuntimeException("Неожиданная ошибка при сохранении результата");
         }
     }
+
+    public String getTableName() {
+        return tableName;
+    }
 }

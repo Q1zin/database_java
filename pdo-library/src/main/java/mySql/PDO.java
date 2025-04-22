@@ -3,6 +3,7 @@ package mySql;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mySql.commands.Command;
+import mySql.commands.SelectCommand;
 import mySql.dataBase.Column;
 import mySql.dataBase.Database;
 import mySql.dataBase.Table;
@@ -17,6 +18,8 @@ import java.util.Set;
 public class PDO {
     private static String PATH_DB = "";
     private static String RESULT_SQL = "";
+    private static String DB_LAST = "";
+    private static String TABLE_LAST = "";
 
     public PDO(String pathDb) {
         setPathDb(pathDb);
@@ -28,6 +31,8 @@ public class PDO {
         boolean isErase = sql.split(" ")[0].equals("ERASE");
         boolean isInit = sql.split(" ")[0].equals("INIT");
 
+        setDbLast(dbName);
+
         Database db = (isErase || isInit) ? loadDB(null) : loadDB(dbName);
         
         setResultSql("");
@@ -38,16 +43,13 @@ public class PDO {
 
         commandObj.execute(db);
 
+        if (commandObj.getClass() == SelectCommand.class) {
+            setTableLast(((SelectCommand) commandObj).getTableName());
+        }
+
         if (!isErase) {
             writeDB(db);
         }
-
-
-        System.out.println("sql: " + sql);
-        System.out.println("__________________________________________");
-        System.out.println(sql + " выполнено успешно.");
-        System.out.println("Результат: " + getResultSql());
-        System.out.println("__________________________________________");
     }
 
     public Table getTable(String dbName, String tableName) {
@@ -219,5 +221,21 @@ public class PDO {
         db.getTables().put(newTableName, table);
 
         writeDB(db);
+    }
+
+    public void setDbLast(String dbLast) {
+        DB_LAST = dbLast;
+    }
+
+    public void setTableLast(String tableLast) {
+        TABLE_LAST = tableLast;
+    }
+
+    public static String getDbLast() {
+        return DB_LAST;
+    }
+
+    public static String getTableLast() {
+        return TABLE_LAST;
     }
 }

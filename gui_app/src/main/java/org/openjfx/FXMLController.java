@@ -10,6 +10,7 @@ import javafx.collections.FXCollections;
 import javafx.scene.control.TableColumn;
 import java.net.URL;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -680,6 +681,9 @@ public class FXMLController {
     }
 
     private void showTable(String sqlResult) {
+        List<Column> cols = pdo.getColumnsTable(PDO.getDbLast(), PDO.getTableLast());
+        List<String> colNames = cols.stream().map(Column::getName).toList();
+
         try {
             ObjectMapper mapper = new ObjectMapper();
             List<Map<String, Object>> items = mapper.readValue(
@@ -692,15 +696,13 @@ public class FXMLController {
 
             tableView.getColumns().clear();
 
-            if (!items.isEmpty()) {
-                Map<String, Object> firstRow = items.getFirst();
-                for (String key : firstRow.keySet()) {
-                    TableColumn<Map<String, Object>, Object> column = new TableColumn<>(key);
-                    column.setCellValueFactory(cellData ->
-                            new SimpleObjectProperty<>(cellData.getValue().get(key)));
-                    tableView.getColumns().add(column);
-                }
+            for (String colName : colNames) {
+                TableColumn<Map<String, Object>, Object> column = new TableColumn<>(colName);
+                column.setCellValueFactory(cellData ->
+                        new SimpleObjectProperty<>(cellData.getValue().get(colName)));
+                tableView.getColumns().add(column);
             }
+
             tableView.setItems(itemsList);
         } catch (Exception e) {
             logger.error("Не удалось выполнить преобразования для отображения данных {}: {}. StackTrace: {}", sqlResult, e.getMessage(), Arrays.toString(e.getStackTrace()));
