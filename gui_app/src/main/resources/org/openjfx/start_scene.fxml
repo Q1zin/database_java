@@ -119,13 +119,13 @@
                               </Label>
                               <Button fx:id="btnAddField" layoutX="539.0" layoutY="11.0" mnemonicParsing="false" text="Вперёд" />
                               <TableView fx:id="tableStruct" layoutX="15.0" layoutY="58.0" prefHeight="389.0" prefWidth="951.0">
-                                <columns>
-                                  <TableColumn prefWidth="275.1547546386719" text="Имя" />
-                                    <TableColumn prefWidth="213.34658813476562" text="Тип" />
-                                    <TableColumn prefWidth="80.399169921875" text="NOT NULL" />
-                                    <TableColumn prefWidth="83.115966796875" text="Unique" />
-                                    <TableColumn prefWidth="297.88409423828125" text="Действие" />
-                                </columns>
+                                 <columns>
+                                    <TableColumn fx:id="nameCol" prefWidth="275.15" text="Имя" />
+                                    <TableColumn fx:id="typeCol" prefWidth="213.35" text="Тип" />
+                                    <TableColumn fx:id="notNullCol" prefWidth="80.40" text="NOT NULL" />
+                                    <TableColumn fx:id="uniqueCol" prefWidth="83.12" text="Unique" />
+                                    <TableColumn fx:id="actionCol" prefWidth="297.88" text="Действие" />
+                                 </columns>
                               </TableView>
                               <Button fx:id="btnSaveStruct" layoutX="18.0" layoutY="459.0" mnemonicParsing="false" text="Сохранить!">
                                  <font>

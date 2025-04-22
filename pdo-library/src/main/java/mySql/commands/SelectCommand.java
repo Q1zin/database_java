@@ -37,7 +37,7 @@ public class SelectCommand extends AbstractCommand {
     }
 
     private void validateSql() {
-        Pattern tablePattern = Pattern.compile("SELECT (\\*|[a-zA-Z_,]+) FROM ([a-zA-Z_][a-zA-Z0-9_]*)(?: WHERE (.+))?");
+        Pattern tablePattern = Pattern.compile("SELECT (\\*|[a-zA-Z_][a-zA-Z0-9_,]+) FROM ([a-zA-Z_][a-zA-Z0-9_]*)(?: WHERE (.+))?");
         Matcher tableMatcher = tablePattern.matcher(sql);
 
         if (!tableMatcher.matches()) {

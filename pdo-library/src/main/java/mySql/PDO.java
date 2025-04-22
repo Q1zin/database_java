@@ -3,12 +3,14 @@ package mySql;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import mySql.commands.Command;
+import mySql.dataBase.Column;
 import mySql.dataBase.Database;
 import mySql.dataBase.Table;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.io.StringWriter;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -166,5 +168,56 @@ public class PDO {
         }
 
         writeDB(new Database(nameDB));
+    }
+
+    public List<Column> getColumnsTable(String nameDB, String tableName) {
+        Database db = loadDB(nameDB);
+
+        return db.getTable(tableName).getColumns();
+    }
+
+    // TODO: добавить проверку типа данных
+    private void validateStruct(List<Column> newStruct) {
+        Set<String> columnNames = new HashSet<>();
+        for (Column column : newStruct) {
+            if (column.getName() == null || column.getName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Нельзя создавать столбик с пустым именем");
+            }
+            if (!columnNames.add(column.getName())) {
+                throw new IllegalArgumentException("Есть повторяющиеся столбики");
+            }
+        }
+    }
+
+    public void updateTableStruct(String nameDB, String tableName, List<Column> newStruct) {
+        Database db = loadDB(nameDB);
+        Table table = db.getTable(tableName);
+
+        if (table == null) {
+            throw new IllegalArgumentException("Таблица " + tableName + " не найдена в базе данных " + nameDB);
+        }
+
+        validateStruct(newStruct);
+
+        table.setColumns(newStruct);
+        table.restructureData();
+
+        writeDB(db);
+    }
+
+    public void renameTable(String nameDB, String tableName, String newTableName) {
+        Database db = loadDB(nameDB);
+        Table table = db.getTable(tableName);
+
+        if (table == null) {
+            throw new IllegalArgumentException("Таблица " + tableName + " не найдена в базе данных " + nameDB);
+        }
+
+        table.setName(newTableName);
+
+        db.getTables().remove(tableName);
+        db.getTables().put(newTableName, table);
+
+        writeDB(db);
     }
 }

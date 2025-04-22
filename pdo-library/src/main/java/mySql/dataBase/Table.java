@@ -122,4 +122,19 @@ public class Table {
 
         return Objects.equals(fieldValue.toString(), valueStr);
     }
+
+    public void restructureData() {
+        List<Map<String, Object>> newData = new ArrayList<>();
+
+        for (Map<String, Object> row : data) {
+            Map<String, Object> newRow = new HashMap<>();
+            for (Column column : columns) {
+                String columnName = column.getName();
+                newRow.put(columnName, row.getOrDefault(columnName, null));
+            }
+            newData.add(newRow);
+        }
+
+        data = newData;
+    }
 }
